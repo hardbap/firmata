@@ -1,5 +1,2 @@
-require "firmata/version"
-
-module Firmata
-  # Your code goes here...
-end
+require 'firmata/version'
+require 'firmata/board'

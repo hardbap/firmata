@@ -14,4 +14,6 @@ Gem::Specification.new do |gem|
   gem.name          = "firmata"
   gem.require_paths = ["lib"]
   gem.version       = Firmata::VERSION
+
+  gem.add_runtime_dependency("serialport", ["~> 1.1.0"])
 end
