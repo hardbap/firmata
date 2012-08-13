@@ -43,7 +43,8 @@ module Firmata
       @pins = []
       @analog_pins = []
       @started = false
-      start_up
+
+#      start_up
     end
 
     def start_up
