@@ -4,8 +4,8 @@ require File.expand_path('../lib/firmata/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["'Mike Breen'"]
   gem.email         = ["hardbap@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
+  gem.description   = %q{A lib for working with the Firmata protocol in Ruby.}
+  gem.summary       = %q{}
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($\)
