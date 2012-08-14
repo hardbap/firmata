@@ -1,3 +1,5 @@
+require 'stringio'
+
 class FakeSerialPort
   Board = Firmata::Board
 
@@ -9,11 +11,8 @@ class FakeSerialPort
     @read_timeout = 0
   end
 
-  def write(*args)
-    check = args.is_a?(Array) ? args.first : args
-    check = check.getbyte(0)
-
-    val = case check
+  def write(command)
+    val = case command.getbyte(0)
           when Board::SYSTEM_RESET
             ""
           when Board::REPORT_VERSION
@@ -26,8 +25,7 @@ class FakeSerialPort
             "\xF9\u0002\u0003\xF0y\u0002\u0003S\u0000t\u0000a\u0000n\u0000d\u0000a\u0000r\u0000d\u0000F\u0000i\u0000r\u0000m\u0000a\u0000t\u0000a\u0000\xF7"
 
           when Board::START_SYSEX
-            case
-
+            case command.getbyte(1)
             when Board::ANALOG_MAPPING_QUERY
               "\xF0j\u007F\u007F\u007F\u007F\u007F\u007F\u007F\u007F\u007F\u007F\u007F\u007F\u007F\u007F\u0000\u0001\u0002\u0003\u0004\u0005\xF7"
 

@@ -1,15 +1,32 @@
 require 'minitest/autorun'
 require 'minitest/pride'
-require 'pry'
 
 require_relative '../lib/firmata'
 require_relative 'fake_serial_port'
 
-class FirmataTest < MiniTest::Unit::TestCase
+class BoardTest < MiniTest::Unit::TestCase
+
+  def mock_serial_port(*args)
+    mock_port = MiniTest::Mock.new
+    mock_port.expect(:read_timeout=, 2, [2])
+    mock_port.expect(:is_a?, false, [nil])
+
+    expected = args.map(&:chr).join
+    mock_port.expect(:write, 1, [expected])
+
+    mock_port
+  end
+
+  def test_writing_report_version
+    mock_sp = mock_serial_port(Firmata::Board::REPORT_VERSION)
+
+    board = Firmata::Board.new(mock_sp)
+    board.report_version
+
+    mock_sp.verify
+  end
 
   def test_reading_report_version
-#    port = "/dev/tty.usbmodemfa131"
-
     board = Firmata::Board.new(FakeSerialPort.new)
     board.report_version
     board.read
@@ -17,8 +34,22 @@ class FirmataTest < MiniTest::Unit::TestCase
     assert_equal '2.3', board.version
   end
 
-  def test_writing_report_version
-    flunk
+  def test_writing_capability_query
+    mock_sp = mock_serial_port(Firmata::Board::START_SYSEX, Firmata::Board::CAPABILITY_QUERY, Firmata::Board::END_SYSEX)
+
+    board = Firmata::Board.new(mock_sp)
+    board.query_capabilities
+
+    mock_sp.verify
+  end
+
+
+  def test_reading_query_capabilities
+    board = Firmata::Board.new(FakeSerialPort.new)
+    board.query_capabilities
+    board.read
+
+    assert_equal 20, board.pins.length
   end
 
   def test_pin_mode
@@ -28,11 +59,6 @@ class FirmataTest < MiniTest::Unit::TestCase
   def test_query_pin_state
     # query_pin_state 13
     # "\xF0n\r\u0001\u0000\xF7"
-    flunk
-  end
-
-  def test_query_capabilities
-    # "\xF0l\u007F\u007F\u0000\u0001\u0001\u0001\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0003\b\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0003\b\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0003\b\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0003\b\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0003\b\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0003\b\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0004\u000E\u007F\u0000\u0001\u0001\u0001\u0002\n\u007F\u0000\u0001\u0001\u0001\u0002\n\u007F\u0000\u0001\u0001\u0001\u0002\n\u007F\u0000\u0001\u0001\u0001\u0002\n\u007F\u0000\u0001\u0001\u0001\u0002\n\u0006\u0001\u007F\u0000\u0001\u0001\u0001\u0002\n\u0006\u0001\u007F\xF7"
     flunk
   end
 

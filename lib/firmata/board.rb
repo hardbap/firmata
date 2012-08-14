@@ -70,7 +70,6 @@ module Firmata
     def read
       bytes = serial_port.bytes
       bytes.each do |byte|
-
         case byte
         when REPORT_VERSION
           @major_version = bytes.next
@@ -94,6 +93,7 @@ module Firmata
           end until current_buffer.last == END_SYSEX
 
           command = current_buffer[1]
+
           case command
           when CAPABILITY_RESPONSE
             supportedModes = 0
