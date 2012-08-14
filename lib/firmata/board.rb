@@ -36,7 +36,7 @@ module Firmata
 
     attr_reader :serial_port, :pins, :analog_pins, :firmware_name
 
-    def initialize(port)
+    def initialize(port, &block)
       @serial_port = port.is_a?(String) ? SerialPort.new(port, 57600, 8, 1, SerialPort::NONE) : port
       @serial_port.read_timeout = 2
       @major_version = 0
@@ -45,27 +45,24 @@ module Firmata
       @analog_pins = []
       @started = false
 
-#      start_up
+      start_up(block)
     end
 
-    def start_up
+    def start_up(callback)
       unless @started
-        delay 3
+        Thread.new do
+          loop do
+            read
+            sleep 1
+          end
+        end
 
+        delay 3
         query_capabilities
         query_analog_mapping
-        turn_pins_on
-
-        reset
-
-        delay 1
-
-        reset
 
         @started = true
       end
-
-      self
     end
 
     def read
