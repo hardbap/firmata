@@ -36,7 +36,7 @@ module Firmata
     attr_reader :serial_port, :pins, :analog_pins
 
     def initialize(port)
-      @serial_port = port.is_a?(String) ? SerialPort.new(port, 57600, 8, 1, SerialPort::NONE) : serial_port
+      @serial_port = port.is_a?(String) ? SerialPort.new(port, 57600, 8, 1, SerialPort::NONE) : port
       @serial_port.read_timeout = 2
       @major_version = 0
       @minor_version = 0
@@ -67,10 +67,10 @@ module Firmata
       self
     end
 
-    def process
+    def read
       bytes = serial_port.bytes
-
       bytes.each do |byte|
+
         case byte
         when REPORT_VERSION
           @major_version = bytes.next
