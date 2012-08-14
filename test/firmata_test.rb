@@ -63,16 +63,17 @@ end
 class FirmataTest < MiniTest::Unit::TestCase
 
   def test_reading_report_version
-
 #    port = "/dev/tty.usbmodemfa131"
-
-
 
     board = Firmata::Board.new(MockSerial.new)
     board.report_version
     board.read
 
     assert_equal '2.3', board.version
+  end
+
+  def test_writing_report_version
+    flunk
   end
 
   def test_pin_mode
