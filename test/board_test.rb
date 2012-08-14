@@ -175,7 +175,16 @@ class BoardTest < MiniTest::Unit::TestCase
   end
 
   def test_digital_write
-    skip
+    mock_sp = mock_serial_port(145, 127, 1)
+    board = Firmata::Board.new(mock_sp)
+
+    8.times do |x|
+      board.pins[x + 8] = Firmata::Board::Pin.new([], 0, 250 + x, nil)
+    end
+
+    board.digital_write(13, 1)
+
+    mock_sp.verify
   end
 
 end

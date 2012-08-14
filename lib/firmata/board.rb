@@ -198,12 +198,10 @@ module Firmata
     def query_capabilities
       write(START_SYSEX, CAPABILITY_QUERY, END_SYSEX)
     end
-    alias_method :qc, :query_capabilities
 
     def query_analog_mapping
       write(START_SYSEX, ANALOG_MAPPING_QUERY, END_SYSEX)
     end
-    alias_method :qam, :query_analog_mapping
 
     def turn_pins_on
       16.times do |i|
