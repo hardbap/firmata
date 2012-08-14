@@ -1,7 +1,10 @@
 require 'serialport'
+require 'event_spitter'
 
 module Firmata
   class Board
+    include EventSpitter
+
     Pin = Struct.new(:supportedModes, :mode, :value, :analog_channel)
 
     # pin modes
@@ -50,17 +53,35 @@ module Firmata
 
     def start_up(callback)
       unless @started
-        Thread.new do
+        self.once('report_version', ->() do
+          self.once('firmware_query', ->() do
+            self.once('capability_query', ->() do
+              self.once('analog_mapping_query', ->() do
+                puts 'whew!'
+                callback.call(self) if callback
+                emit('ready')
+              end)
+              query_analog_mapping
+           end)
+            query_capabilities
+          end)
+        end)
+
+         Thread.new do
           loop do
             read
             sleep 1
           end
         end
+=begin
 
         delay 3
+
+        self.once('capability_query', ->() { puts 'hola' })
+
         query_capabilities
         query_analog_mapping
-
+=end
         @started = true
       end
     end
@@ -72,6 +93,8 @@ module Firmata
         when REPORT_VERSION
           @major_version = bytes.next
           @minor_version = bytes.next
+
+          emit('report_version')
 
         when ANALOG_MESSAGE_RANGE
           least_significant_byte = bytes.next
@@ -117,6 +140,8 @@ module Firmata
               n ^= 1
             end
 
+            emit('capability_query')
+
           when ANALOG_MAPPING_RESPONSE
             pin_index = 0
 
@@ -129,6 +154,8 @@ module Firmata
               pin_index += 1
             end
 
+            emit('analog_mapping_query')
+
           when PIN_STATE_RESPONSE
             pin       = pins[current_buffer[2]]
             pin.mode  = current_buffer[3]
@@ -140,6 +167,8 @@ module Firmata
 
           when FIRMWARE_QUERY
             @firmware_name = current_buffer.slice(4, current_buffer.length - 5).reject { |b| b.zero? }.map(&:chr).join
+            emit('firmware_query')
+
           else
             # TODO decide what to do with unknown message
           end
