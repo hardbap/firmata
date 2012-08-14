@@ -4,7 +4,7 @@ require 'pry'
 
 require_relative '../lib/firmata'
 
-class MockSerial
+class FakeSerialPort
   Board = Firmata::Board
 
   attr_reader :buffer
@@ -65,7 +65,7 @@ class FirmataTest < MiniTest::Unit::TestCase
   def test_reading_report_version
 #    port = "/dev/tty.usbmodemfa131"
 
-    board = Firmata::Board.new(MockSerial.new)
+    board = Firmata::Board.new(FakeSerialPort.new)
     board.report_version
     board.read
 
