@@ -156,19 +156,26 @@ class BoardTest < MiniTest::Unit::TestCase
   end
 
   def test_reset
-    skip
+    mock_sp = mock_serial_port(Firmata::Board::SYSTEM_RESET)
+
+    board = Firmata::Board.new(mock_sp)
+    board.reset
+
+    mock_sp.verify
   end
 
-  def test_firmware_query
-    #"\xF9\u0002\u0003\xF0y\u0002\u0003S\u0000t\u0000a\u0000n\u0000d\u0000a\u0000r\u0000d\u0000F\u0000i\u0000r\u0000m\u0000a\u0000t\u0000a\u0000\xF7"
-    skip
+  def test_read_firmware_query
+    fake_port = FakeSerialPort.new
+    fake_port.buffer = "\xF0y\u0002\u0003S\u0000t\u0000a\u0000n\u0000d\u0000a\u0000r\u0000d\u0000F\u0000i\u0000r\u0000m\u0000a\u0000t\u0000a\u0000\xF7"
+    board = Firmata::Board.new(fake_port)
+
+    board.read
+
+    assert_equal 'StandardFirmata', board.firmware_name, 'Firmware Name is incorrect'
   end
 
   def test_digital_write
     skip
   end
 
-  def test_delay
-    skip
-  end
 end

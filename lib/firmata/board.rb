@@ -32,8 +32,9 @@ module Firmata
     ANALOG_MAPPING_RESPONSE = 0x6A
     FIRMWARE_QUERY          = 0x79
     PIN_MODE                = 0xF4
+    QUERY_FIRMWARE          = 0x79
 
-    attr_reader :serial_port, :pins, :analog_pins
+    attr_reader :serial_port, :pins, :analog_pins, :firmware_name
 
     def initialize(port)
       @serial_port = port.is_a?(String) ? SerialPort.new(port, 57600, 8, 1, SerialPort::NONE) : port
@@ -85,9 +86,6 @@ module Firmata
           if analog_pin = analog_pins[pin]
             pins[analog_pin].value = value
           end
-
-        when DIGITAL_MESSAGE
-          puts 'I gots a digital message'
 
         when START_SYSEX
           current_buffer = [byte]
@@ -144,6 +142,7 @@ module Firmata
             pin.value |= (current_buffer[6] << 14) if current_buffer.size > 7
 
           when FIRMWARE_QUERY
+            @firmware_name = current_buffer.slice(4, current_buffer.length - 5).reject { |b| b.zero? }.map(&:chr).join
           else
             # TODO decide what to do with unknown message
           end
