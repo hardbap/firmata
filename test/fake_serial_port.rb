@@ -3,7 +3,7 @@ require 'stringio'
 class FakeSerialPort
   Board = Firmata::Board
 
-  attr_reader :buffer
+  attr_accessor :buffer
   attr_accessor :read_timeout
 
   def initialize

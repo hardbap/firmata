@@ -86,6 +86,9 @@ module Firmata
             pins[analog_pin].value = value
           end
 
+        when DIGITAL_MESSAGE
+          puts 'I gots a digital message'
+
         when START_SYSEX
           current_buffer = [byte]
           begin
