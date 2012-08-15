@@ -4,9 +4,25 @@ require 'pry'
 
 board = Firmata::Board.new('/dev/tty.usbmodemfa131')
 
-board.on('ready', ->() { board.pry })
+board.on('ready', ->() do
 
-loop do
-  board.read
-  sleep 1
-end until board.connected?
+  10.times do
+    board.digital_write 13, Firmata::Board::HIGH
+    board.delay 1
+
+    board.digital_write 13, Firmata::Board::LOW
+    board.delay 1
+  end
+
+end)
+
+board.connect
+
+ Thread.new do
+  loop do
+    board.read
+    sleep 1
+  end
+end
+
+board.pry
