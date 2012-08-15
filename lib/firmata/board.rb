@@ -89,8 +89,16 @@ module Firmata
       end
     end
 
+    def write(*commands)
+      serial_port.write(commands.map(&:chr).join)
+    end
+
     def read
-      bytes = serial_port.bytes
+      serial_port.bytes
+    end
+
+    def process
+      bytes = read
       bytes.each do |byte|
         case byte
         when REPORT_VERSION
@@ -185,9 +193,7 @@ module Firmata
       write(SYSTEM_RESET)
     end
 
-    def write(*commands)
-      @serial_port.write(commands.map(&:chr).join)
-    end
+
 
     def pin_mode(pin, mode)
       pins[pin].mode = mode
