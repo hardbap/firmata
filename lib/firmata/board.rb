@@ -7,12 +7,16 @@ module Firmata
 
     Pin = Struct.new(:supportedModes, :mode, :value, :analog_channel)
 
-    # pin modes
-    INPUT  = 0x00
+    # Public: Fixnum byte for pin mode input.
+    INPUT = 0x00
+    # Public: Fixnum byte for pin mode output.
     OUTPUT = 0x01
+    # Public: Fixnum byte for pin mode analog.
     ANALOG = 0x02
-    PWM    = 0x03
-    SERVO  = 0x04
+    # Public: Fixnum byte for pin mode pulse width modulation.
+    PWM = 0x03
+    # Public: Fixnum byte for pin mode servo.
+    SERVO = 0x04
 
     LOW  = 0
     HIGH = 1
@@ -54,7 +58,6 @@ module Firmata
     ANALOG_MAPPING_RESPONSE = 0x6A
     # Public: Fixnum byte sysex command for firmware query and response
     FIRMWARE_QUERY = 0x79
-
 
     attr_reader :serial_port, :pins, :analog_pins, :firmware_name
 
@@ -109,7 +112,7 @@ module Firmata
       serial_port.bytes
     end
 
-    # Public: Process the bytes read from serial port.
+    # Public: Process a series of bytes.
     #
     # bytes: An Enumerator of bytes (default: read())
     #
@@ -205,10 +208,23 @@ module Firmata
       # do nadda
     end
 
+    # Public: Reset the board
+    #
+    # Returns nothing.
     def reset
       write(SYSTEM_RESET)
     end
 
+    # Public: Set the mode for a pin.
+    #
+    # pin  - The Integer for the pin to set.
+    # mode - The Fixnum mode (INPUT, OUTPUT, ANALOG, PWM or SERVO)
+    #
+    # Examples
+    #
+    #   pin_mode(13, OUTPUT)
+    #
+    # Returns nothing.
     def pin_mode(pin, mode)
       pins[pin].mode = mode
       write(PIN_MODE, pin, mode)
@@ -228,43 +244,77 @@ module Firmata
       write(DIGITAL_MESSAGE | port, port_value & 0x7F, (port_value >> 7) & 0x7F)
     end
 
+    # Public: Puts the board to sleep for a number of seconds.
+    #
+    # seconds - The Integer seconds to sleep for.
+    #
+    # Returns nothing.
     def delay(seconds)
       sleep(seconds)
     end
 
+    # Public: The major and minor firmware version on the board. Will report as
+    # "0.0" if report_version command has not been run.
+    #
+    # Returns String the firmware version as "minor.major".
     def version
       [@major_version, @minor_version].join('.')
     end
 
+    # Public: Send the report version command to the board.
+    #
+    # Returns nothing.
     def report_version
       write(REPORT_VERSION)
     end
 
+    # Public: Read the current configuration of any pin.
+    #
+    # pin - The Integer pin to query on the board.
+    #
+    # Returns nothing.
     def query_pin_state(pin)
       write(START_SYSEX, PIN_STATE_QUERY, pin.to_i, END_SYSEX)
     end
 
+    # Public: Discover the capabilities and current state of the board.
+    #
+    # Returns nothing.
     def query_capabilities
       write(START_SYSEX, CAPABILITY_QUERY, END_SYSEX)
     end
 
+    # Public: Query which pins (used with pin mode message) correspond to the analog channels.
+    #
+    # Returns nothing.
     def query_analog_mapping
       write(START_SYSEX, ANALOG_MAPPING_QUERY, END_SYSEX)
     end
 
-    def toggle_pins(state)
+    # Internal: Toggle the pin analog and digtal reporting off and on.
+    #
+    # state - The Integer to turn the pin on (1) or off (0).
+    #
+    # Returns nothing.
+    def toggle_pin_reporting(state)
       16.times do |i|
         write(REPORT_DIGITAL | i, state)
         write(REPORT_ANALOG | i, state)
       end
     end
 
-    def turn_pins_on
-      toggle_pins(1)
+    # Public: Turn pin analog and digital reporting on.
+    #
+    # Returns nothing.
+    def turn_pin_reporting_on
+      toggle_pin_reporting(1)
     end
 
-    def turn_pins_off
-      toggle_pins(0)
+    # Public: Turn pin analog and digital reporting off.
+    #
+    # Returns nothing.
+    def turn_pin_reporting_off
+      toggle_pin_reporting(0)
     end
   end
 end
