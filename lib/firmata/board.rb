@@ -47,8 +47,6 @@ module Firmata
       @pins = []
       @analog_pins = []
       @connected = false
-
-      connect
     end
 
     def connected?
