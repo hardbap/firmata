@@ -213,18 +213,19 @@ module Firmata
       write(START_SYSEX, ANALOG_MAPPING_QUERY, END_SYSEX)
     end
 
-    def turn_pins_on
+    def toggle_pins(state)
       16.times do |i|
-        write(REPORT_DIGITAL | i, 1)
-        write(REPORT_ANALOG | i, 1)
+        write(REPORT_DIGITAL | i, state)
+        write(REPORT_ANALOG | i, state)
       end
     end
 
+    def turn_pins_on
+      toggle_pins(1)
+    end
+
     def turn_pins_off
-      16.times do |i|
-        write(REPORT_DIGITAL | i, 0)
-        write(REPORT_ANALOG | i, 0)
-      end
+      toggle_pins(0)
     end
   end
 end
