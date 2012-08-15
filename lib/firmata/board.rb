@@ -70,14 +70,14 @@ module Firmata
           end)
         end)
 
+
+=begin
          Thread.new do
           loop do
             read
             sleep 1
           end
         end
-=begin
-
         delay 3
 
         self.once('capability_query', ->() { puts 'hola' })
