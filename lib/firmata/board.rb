@@ -17,25 +17,44 @@ module Firmata
     LOW  = 0
     HIGH = 1
 
-    DIGITAL_MESSAGE         = 0x90
-    ANALOG_MESSAGE          = 0xE0
-    ANALOG_MESSAGE_RANGE    = 0xE0..0xEF
-    SET_PIN_MODE            = 0xF4
-    REPORT_ANALOG           = 0xC0
-    REPORT_DIGITAL          = 0xD0
-    REPORT_VERSION          = 0xF9
-    CAPABILITY_QUERY        = 0x6B
-    CAPABILITY_RESPONSE     = 0x6C
-    START_SYSEX             = 0xF0
-    END_SYSEX               = 0xF7
-    PIN_STATE_QUERY         = 0x6D
-    PIN_STATE_RESPONSE      = 0x6E
-    SYSTEM_RESET            = 0xFF
+    # Public: Fixnum byte command for protocol version
+    REPORT_VERSION = 0xF9
+    # Public: Fixnum byte command for system reset
+    SYSTEM_RESET = 0xFF
+    # Public: Fixnum byte command for digital I/O message
+    DIGITAL_MESSAGE = 0x90
+    # Pubilc: Fixnum byte for range for digital pins for digital 2 byte data format
+    DIGITAL_MESSAGE_RANGE = 0x90..0x9F
+    # Public: Fixnum byte command for an analog I/O message
+    ANALOG_MESSAGE = 0xE0
+    # Public: Fixnum byte range for analog pins for analog 14-bit data format
+    ANALOG_MESSAGE_RANGE = 0xE0..0xEF
+    # Public: Fixnum byte command to report analog pin
+    REPORT_ANALOG = 0xC0
+    # Public: Fixnum byte command to report digital port
+    REPORT_DIGITAL = 0xD0
+    # Public: Fixnum byte command to set pin mode (I/O)
+    PIN_MODE  = 0xF4
+
+    # Public: Fixnum byte command for start of Sysex message
+    START_SYSEX = 0xF0
+    # Public: Fixnum byte command for end of Sysex message
+    END_SYSEX = 0xF7
+    # Public: Fixnum byte sysex command for capabilities query
+    CAPABILITY_QUERY = 0x6B
+    # Public: Fixnum byte sysex command for capabilities response
+    CAPABILITY_RESPONSE = 0x6C
+    # Public: Fixnum byte sysex command for pin state query
+    PIN_STATE_QUERY = 0x6D
+    # Public: Fixnum byte sysex command for pin state response
+    PIN_STATE_RESPONSE = 0x6E
+    # Public: Fixnum byte sysex command for analog mapping query
     ANALOG_MAPPING_QUERY    = 0x69
+    # Public: Fixnum byte sysex command for analog mapping response
     ANALOG_MAPPING_RESPONSE = 0x6A
-    FIRMWARE_QUERY          = 0x79
-    PIN_MODE                = 0xF4
-    QUERY_FIRMWARE          = 0x79
+    # Public: Fixnum byte sysex command for firmware query and response
+    FIRMWARE_QUERY = 0x79
+
 
     attr_reader :serial_port, :pins, :analog_pins, :firmware_name
 
