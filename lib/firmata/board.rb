@@ -46,21 +46,27 @@ module Firmata
       @minor_version = 0
       @pins = []
       @analog_pins = []
-      @started = false
+      @connected = false
+
+      connect
     end
 
+    def connected?
+      @connected
+    end
 
     def connect
-      unless @started
+      unless @connected
         self.once('report_version', ->() do
           self.once('firmware_query', ->() do
             self.once('capability_query', ->() do
               self.once('analog_mapping_query', ->() do
+                @connected = true
                 emit('ready')
               end)
-              Thread.new { query_analog_mapping }
+              query_analog_mapping
            end)
-            Thread.new { query_capabilities }
+            query_capabilities
           end)
         end)
 
@@ -79,7 +85,7 @@ module Firmata
         query_capabilities
         query_analog_mapping
 =end
-        @started = true
+
       end
     end
 
