@@ -89,16 +89,32 @@ module Firmata
       end
     end
 
+    # Public: Write data to the underlying serial port.
+    #
+    # commands - Zero or more byte commands to be written.
+    #
+    # Examples
+    #
+    #   write(START_SYSEX, CAPABILITY_QUERY, END_SYSEX)
+    #
+    # Returns nothing.
     def write(*commands)
       serial_port.write(commands.map(&:chr).join)
     end
 
+    # Public: Read data from the underlying serial port.
+    #
+    # Returns Enumerator of bytes read.
     def read
       serial_port.bytes
     end
 
-    def process
-      bytes = read
+    # Public: Process the bytes read from serial port.
+    #
+    # bytes: An Enumerator of bytes (default: read())
+    #
+    # Returns nothing.
+    def process(bytes = read)
       bytes.each do |byte|
         case byte
         when REPORT_VERSION
@@ -192,8 +208,6 @@ module Firmata
     def reset
       write(SYSTEM_RESET)
     end
-
-
 
     def pin_mode(pin, mode)
       pins[pin].mode = mode
