@@ -21,45 +21,52 @@ module Firmata
     LOW  = 0
     HIGH = 1
 
-    # Public: Fixnum byte command for protocol version
+    # Internal: Fixnum byte command for protocol version
     REPORT_VERSION = 0xF9
-    # Public: Fixnum byte command for system reset
+    # Internal: Fixnum byte command for system reset
     SYSTEM_RESET = 0xFF
-    # Public: Fixnum byte command for digital I/O message
+    # Internal: Fixnum byte command for digital I/O message
     DIGITAL_MESSAGE = 0x90
     # Pubilc: Fixnum byte for range for digital pins for digital 2 byte data format
     DIGITAL_MESSAGE_RANGE = 0x90..0x9F
-    # Public: Fixnum byte command for an analog I/O message
+    # Internal: Fixnum byte command for an analog I/O message
     ANALOG_MESSAGE = 0xE0
-    # Public: Fixnum byte range for analog pins for analog 14-bit data format
+    # Internal: Fixnum byte range for analog pins for analog 14-bit data format
     ANALOG_MESSAGE_RANGE = 0xE0..0xEF
-    # Public: Fixnum byte command to report analog pin
+    # Internal: Fixnum byte command to report analog pin
     REPORT_ANALOG = 0xC0
-    # Public: Fixnum byte command to report digital port
+    # Internal: Fixnum byte command to report digital port
     REPORT_DIGITAL = 0xD0
-    # Public: Fixnum byte command to set pin mode (I/O)
+    # Internal: Fixnum byte command to set pin mode (I/O)
     PIN_MODE  = 0xF4
 
-    # Public: Fixnum byte command for start of Sysex message
+    # Internal: Fixnum byte command for start of Sysex message
     START_SYSEX = 0xF0
-    # Public: Fixnum byte command for end of Sysex message
+    # Internal: Fixnum byte command for end of Sysex message
     END_SYSEX = 0xF7
-    # Public: Fixnum byte sysex command for capabilities query
+    # Internal: Fixnum byte sysex command for capabilities query
     CAPABILITY_QUERY = 0x6B
-    # Public: Fixnum byte sysex command for capabilities response
+    # Internal: Fixnum byte sysex command for capabilities response
     CAPABILITY_RESPONSE = 0x6C
-    # Public: Fixnum byte sysex command for pin state query
+    # Internal: Fixnum byte sysex command for pin state query
     PIN_STATE_QUERY = 0x6D
-    # Public: Fixnum byte sysex command for pin state response
+    # Internal: Fixnum byte sysex command for pin state response
     PIN_STATE_RESPONSE = 0x6E
-    # Public: Fixnum byte sysex command for analog mapping query
+    # Internal: Fixnum byte sysex command for analog mapping query
     ANALOG_MAPPING_QUERY    = 0x69
-    # Public: Fixnum byte sysex command for analog mapping response
+    # Internal: Fixnum byte sysex command for analog mapping response
     ANALOG_MAPPING_RESPONSE = 0x6A
-    # Public: Fixnum byte sysex command for firmware query and response
+    # Internal: Fixnum byte sysex command for firmware query and response
     FIRMWARE_QUERY = 0x79
 
-    attr_reader :serial_port, :pins, :analog_pins, :firmware_name
+    # Public: Returns the SerialPort port the board is attached to.
+    attr_reader :serial_port
+    # Public: Returns the Array of pins.
+    attr_reader :pins
+    # Public: Returns the Array of analog pins.
+    attr_reader :analog_pins
+    # Public: Returns the String firmware name.
+    attr_reader :firmware_name
 
     def initialize(port)
       @serial_port = port.is_a?(String) ? SerialPort.new(port, 57600, 8, 1, SerialPort::NONE) : port
@@ -107,7 +114,7 @@ module Firmata
 
     # Internal: Read data from the underlying serial port.
     #
-    # Returns Enumerator of bytes read.
+    # Returns Enumerator of bytes.
     def read
       serial_port.bytes
     end
@@ -208,7 +215,7 @@ module Firmata
       # do nadda
     end
 
-    # Public: Reset the board
+    # Public: Send a SYSTEM_RESET to the Arduino
     #
     # Returns nothing.
     def reset
@@ -249,7 +256,7 @@ module Firmata
       write(DIGITAL_MESSAGE | port, port_value & 0x7F, (port_value >> 7) & 0x7F)
     end
 
-    # Public: Puts the board to sleep for a number of seconds.
+    # Public: Ask the Arduino to sleep for a number of seconds.
     #
     # seconds - The Integer seconds to sleep for.
     #
@@ -266,14 +273,14 @@ module Firmata
       [@major_version, @minor_version].join('.')
     end
 
-    # Public: Send the report version command to the board.
+    # Public: Ask the Arduino to report its version.
     #
     # Returns nothing.
     def report_version
       write(REPORT_VERSION)
     end
 
-    # Public: Read the current configuration of any pin.
+    # Public: Ask the Arduino for the current configuration of any pin.
     #
     # pin - The Integer pin to query on the board.
     #
@@ -282,14 +289,14 @@ module Firmata
       write(START_SYSEX, PIN_STATE_QUERY, pin.to_i, END_SYSEX)
     end
 
-    # Public: Discover the capabilities and current state of the board.
+    # Public: Ask the Arduino about its capabilities and current state.
     #
     # Returns nothing.
     def query_capabilities
       write(START_SYSEX, CAPABILITY_QUERY, END_SYSEX)
     end
 
-    # Public: Query which pins (used with pin mode message) correspond to the analog channels.
+    # Public: Ask the Arduino which pins (used with pin mode message) correspond to the analog channels.
     #
     # Returns nothing.
     def query_analog_mapping
