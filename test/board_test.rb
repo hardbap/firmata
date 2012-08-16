@@ -163,6 +163,15 @@ class BoardTest < MiniTest::Unit::TestCase
     mock_sp.verify
   end
 
+  def test_write_firmware_query
+    mock_sp = mock_serial_port(Firmata::Board::FIRMWARE_QUERY)
+
+    board = Firmata::Board.new(mock_sp)
+    board.query_firmware
+
+    mock_sp.verify
+  end
+
   def test_read_firmware_query
     fake_port = FakeSerialPort.new
     fake_port.buffer = "\xF0y\u0002\u0003S\u0000t\u0000a\u0000n\u0000d\u0000a\u0000r\u0000d\u0000F\u0000i\u0000r\u0000m\u0000a\u0000t\u0000a\u0000\xF7"

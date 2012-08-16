@@ -280,6 +280,13 @@ module Firmata
       write(REPORT_VERSION)
     end
 
+    # Public: Ask the Ardution for its firmware name.
+    #
+    # Returns nothing.
+    def query_firmware
+      write(FIRMWARE_QUERY)
+    end
+
     # Public: Ask the Arduino for the current configuration of any pin.
     #
     # pin - The Integer pin to query on the board.
