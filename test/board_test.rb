@@ -30,7 +30,7 @@ class BoardTest < MiniTest::Unit::TestCase
     mock_sp.verify
   end
 
-  def test_reading_report_version
+  def test_processing_report_version
     board = Firmata::Board.new(FakeSerialPort.new)
     board.report_version
     board.process
@@ -47,7 +47,7 @@ class BoardTest < MiniTest::Unit::TestCase
     mock_sp.verify
   end
 
-  def test_reading_capabilities_query
+  def test_processing_capabilities_query
     board = Firmata::Board.new(FakeSerialPort.new)
     board.query_capabilities
     board.process
@@ -64,7 +64,7 @@ class BoardTest < MiniTest::Unit::TestCase
     mock_sp.verify
   end
 
-  def test_reading_analog_mapping_query
+  def test_processing_analog_mapping_query
     board = Firmata::Board.new(FakeSerialPort.new)
     board.query_capabilities
     board.process
@@ -95,7 +95,7 @@ class BoardTest < MiniTest::Unit::TestCase
     mock_sp.verify
   end
 
-  def test_read_pin_state_query
+  def test_processing_pin_state_query
     board = Firmata::Board.new(FakeSerialPort.new)
     board.query_capabilities
     board.process
@@ -136,7 +136,7 @@ class BoardTest < MiniTest::Unit::TestCase
     mock_sp.verify
   end
 
-  def test_read_analog_message
+  def test_processing_analog_message
     fake_port = FakeSerialPort.new
     board = Firmata::Board.new(fake_port)
 
@@ -172,7 +172,7 @@ class BoardTest < MiniTest::Unit::TestCase
     mock_sp.verify
   end
 
-  def test_read_firmware_query
+  def test_process_firmware_query
     fake_port = FakeSerialPort.new
     fake_port.buffer = "\xF0y\u0002\u0003S\u0000t\u0000a\u0000n\u0000d\u0000a\u0000r\u0000d\u0000F\u0000i\u0000r\u0000m\u0000a\u0000t\u0000a\u0000\xF7"
     board = Firmata::Board.new(fake_port)
