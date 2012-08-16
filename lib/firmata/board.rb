@@ -217,7 +217,7 @@ module Firmata
 
     # Public: Set the mode for a pin.
     #
-    # pin  - The Integer for the pin to set.
+    # pin  - The Integer pin to set.
     # mode - The Fixnum mode (INPUT, OUTPUT, ANALOG, PWM or SERVO)
     #
     # Examples
@@ -230,8 +230,13 @@ module Firmata
       write(PIN_MODE, pin, mode)
     end
 
+    # Public: Write a value to a digital pin.
+    #
+    # pin   - The Integer pin to write to.
+    # value - The value to write (HIGH or LOW).
+    #
+    # Returns nothing.
     def digital_write(pin, value)
-
       port = (pin / 8).floor
       port_value = 0
 
