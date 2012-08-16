@@ -5,6 +5,7 @@ module Firmata
   class Board
     include EventSpitter
 
+    # Internal: Data structure representing a pin on Arduino.
     Pin = Struct.new(:supportedModes, :mode, :value, :analog_channel)
 
     # Public: Fixnum byte for pin mode input.
@@ -59,13 +60,13 @@ module Firmata
     # Internal: Fixnum byte sysex command for firmware query and response
     FIRMWARE_QUERY = 0x79
 
-    # Public: Returns the SerialPort port the board is attached to.
+    # Public: Returns the SerialPort port the Arduino is attached to.
     attr_reader :serial_port
-    # Public: Returns the Array of pins.
+    # Public: Returns the Array of pins on Arduino.
     attr_reader :pins
-    # Public: Returns the Array of analog pins.
+    # Public: Returns the Array of analog pins on Arduino.
     attr_reader :analog_pins
-    # Public: Returns the String firmware name.
+    # Public: Returns the String firmware name of Arduion.
     attr_reader :firmware_name
 
     def initialize(port)
