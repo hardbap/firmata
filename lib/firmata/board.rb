@@ -92,7 +92,7 @@ module Firmata
       end
     end
 
-    # Public: Write data to the underlying serial port.
+    # Internal: Write data to the underlying serial port.
     #
     # commands - Zero or more byte commands to be written.
     #
@@ -105,14 +105,14 @@ module Firmata
       serial_port.write(commands.map(&:chr).join)
     end
 
-    # Public: Read data from the underlying serial port.
+    # Internal: Read data from the underlying serial port.
     #
     # Returns Enumerator of bytes read.
     def read
       serial_port.bytes
     end
 
-    # Public: Process a series of bytes.
+    # Internal: Process a series of bytes.
     #
     # bytes: An Enumerator of bytes (default: read())
     #
