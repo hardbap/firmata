@@ -122,10 +122,10 @@ module Firmata
 
     # Internal: Process a series of bytes.
     #
-    # bytes: An Enumerator of bytes (default: read())
+    # bytes: An Enumerator of bytes
     #
     # Returns nothing.
-    def process(bytes = read)
+    def process(bytes)
       bytes.each do |byte|
         case byte
         when REPORT_VERSION
@@ -214,6 +214,13 @@ module Firmata
       end
     rescue StopIteration
       # do nadda
+    end
+
+    # Public: Read the serial port and process the results
+    #
+    # Returns nothing.
+    def read_and_process
+      process(read)
     end
 
     # Public: Send a SYSTEM_RESET to the Arduino
