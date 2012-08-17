@@ -95,19 +95,20 @@ module Firmata
            end)
           end)
         end)
-      end
 
-      Thread.new do
-        loop do
-          read_and_process
-          sleep(1)
+
+        Thread.new do
+          loop do
+            read_and_process
+            sleep(1)
+          end
         end
-      end
 
-      query_capabilities
-      query_analog_mapping
+        query_capabilities
+        query_analog_mapping
 
-      until connected?
+        until connected?
+        end
       end
 
       self
