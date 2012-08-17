@@ -92,12 +92,25 @@ module Firmata
                 @connected = true
                 emit('ready')
               end)
-              query_analog_mapping
            end)
-            query_capabilities
           end)
         end)
       end
+
+      Thread.new do
+        loop do
+          read_and_process
+          sleep(1)
+        end
+      end
+
+      query_capabilities
+      query_analog_mapping
+
+      until connected?
+      end
+
+      self
     end
 
     # Internal: Write data to the underlying serial port.
