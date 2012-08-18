@@ -84,6 +84,7 @@ class BoardTest < MiniTest::Unit::TestCase
     board.pin_mode(13, Firmata::Board::OUTPUT)
 
     assert_equal Firmata::Board::OUTPUT, board.pins[13].mode
+    mock_sp.verify
   end
 
   def test_write_pin_state_query
