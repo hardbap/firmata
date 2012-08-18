@@ -79,10 +79,16 @@ module Firmata
       @connected = false
     end
 
+    # Pubilc: Check if a connection to Arduino has been made.
+    #
+    # Returns Boolean connected state.
     def connected?
       @connected
     end
 
+    # Public: Make connection to Arduio.
+    #
+    # Returns Firmata::Board board.
     def connect
       unless @connected
         once('report_version', ->() do
