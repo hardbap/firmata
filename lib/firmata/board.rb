@@ -96,18 +96,12 @@ module Firmata
           end)
         end)
 
-
-        Thread.new do
-          loop do
-            read_and_process
-            sleep(1)
-          end
-        end
-
         query_capabilities
         query_analog_mapping
 
         until connected?
+          read_and_process
+          sleep(0.5)
         end
       end
 
