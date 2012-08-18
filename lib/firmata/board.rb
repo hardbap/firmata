@@ -85,10 +85,10 @@ module Firmata
 
     def connect
       unless @connected
-        self.once('report_version', ->() do
-          self.once('firmware_query', ->() do
-            self.once('capability_query', ->() do
-              self.once('analog_mapping_query', ->() do
+        once('report_version', ->() do
+          once('firmware_query', ->() do
+            once('capability_query', ->() do
+              once('analog_mapping_query', ->() do
                 @connected = true
                 emit('ready')
               end)
@@ -101,7 +101,7 @@ module Firmata
 
         until connected?
           read_and_process
-          sleep(0.5)
+          delay(0.5)
         end
       end
 
