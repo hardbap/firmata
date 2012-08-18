@@ -92,14 +92,13 @@ module Firmata
                 @connected = true
                 emit('ready')
               end)
+              query_analog_mapping
            end)
+            query_capabilities
           end)
         end)
 
-        query_capabilities
-        query_analog_mapping
-
-        until connected?
+         until connected?
           read_and_process
           delay(0.5)
         end
