@@ -143,6 +143,7 @@ module Firmata
     # Returns nothing.
     def process(bytes)
       bytes.each do |byte|
+        puts "byte: #{byte}"
         case byte
         when REPORT_VERSION
           @major_version = bytes.next
