@@ -15,7 +15,7 @@ class BoardTest < MiniTest::Unit::TestCase
       yield mock_port
     else
       expected = args.map(&:chr).join
-      mock_port.expect(:write, 1, [expected])
+      mock_port.expect(:write_nonblock, 1, [expected])
     end
 
     mock_port
@@ -112,8 +112,8 @@ class BoardTest < MiniTest::Unit::TestCase
   def test_write_turn_pin_reporting_on
     mock_sp = mock_serial_port do |mock|
       16.times do |i|
-        mock.expect(:write, 2, [[Firmata::Board::REPORT_DIGITAL | i, 1].map(&:chr).join])
-        mock.expect(:write, 2, [[(Firmata::Board::REPORT_ANALOG | i), 1].map(&:chr).join])
+        mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | i, 1].map(&:chr).join])
+        mock.expect(:write_nonblock, 2, [[(Firmata::Board::REPORT_ANALOG | i), 1].map(&:chr).join])
       end
     end
 
@@ -126,8 +126,8 @@ class BoardTest < MiniTest::Unit::TestCase
   def test_turn_pin_reporting_off
     mock_sp = mock_serial_port do |mock|
       16.times do |i|
-        mock.expect(:write, 2, [[Firmata::Board::REPORT_DIGITAL | i, 0].map(&:chr).join])
-        mock.expect(:write, 2, [[(Firmata::Board::REPORT_ANALOG | i), 0].map(&:chr).join])
+        mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | i, 0].map(&:chr).join])
+        mock.expect(:write_nonblock, 2, [[(Firmata::Board::REPORT_ANALOG | i), 0].map(&:chr).join])
       end
     end
 
