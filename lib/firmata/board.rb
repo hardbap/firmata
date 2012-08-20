@@ -126,22 +126,24 @@ module Firmata
     #
     # Returns nothing.
     def write(*commands)
-      serial_port.write(commands.map(&:chr).join)
+      serial_port.write_nonblock(commands.map(&:chr).join)
     end
 
     # Internal: Read data from the underlying serial port.
     #
-    # Returns Enumerator of bytes.
+    # Returns String data read for serial port.
     def read
-      serial_port.bytes
+      serial_port.read_nonblock(4096)
+    rescue EOFError
     end
 
     # Internal: Process a series of bytes.
     #
-    # bytes: An Enumerator of bytes
+    # data: The String data to process.
     #
     # Returns nothing.
-    def process(bytes)
+    def process(data)
+      bytes = StringIO.new(String(data)).bytes
       bytes.each do |byte|
         case byte
         when REPORT_VERSION
@@ -162,7 +164,17 @@ module Firmata
           end
 
         when DIGITAL_MESSAGE_RANGE
-          puts "Digital Message: #{byte}"
+          port = byte & 0x0F
+          port_value = bytes.next | (bytes.next << 7)
+
+          8.times do |i|
+            pin_number = 8 * port + i
+            if pin = pins[pin_number] and pin.mode == INPUT
+              value = (port_value >> (i & 0x07)) & 0x01
+              pin.value = value
+              emit('digital-read', pin_number, value)
+            end
+          end
 
         when START_SYSEX
           current_buffer = [byte]
@@ -227,7 +239,7 @@ module Firmata
             emit('firmware_query')
 
           else
-            # TODO decide what to do with unknown message
+            puts 'bad byte'
           end
         end
       end
