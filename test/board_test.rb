@@ -75,13 +75,13 @@ class BoardTest < MiniTest::Unit::TestCase
     assert_equal 6, board.analog_pins.size
   end
 
-  def test_write_pin_mode
+  def test_set_pin_mode
     mock_sp = mock_serial_port(Firmata::Board::PIN_MODE, 13, Firmata::Board::OUTPUT)
 
     board = Firmata::Board.new(mock_sp)
     board.pins[13] = Firmata::Board::Pin.new([0, 1, 4], 0, 0, nil)
 
-    board.pin_mode(13, Firmata::Board::OUTPUT)
+    board.set_pin_mode(13, Firmata::Board::OUTPUT)
 
     assert_equal Firmata::Board::OUTPUT, board.pins[13].mode
     mock_sp.verify

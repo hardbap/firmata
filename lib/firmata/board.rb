@@ -268,10 +268,10 @@ module Firmata
     #
     # Examples
     #
-    #   pin_mode(13, OUTPUT)
+    #   set_pin_mode(13, OUTPUT)
     #
     # Returns nothing.
-    def pin_mode(pin, mode)
+    def set_pin_mode(pin, mode)
       pins[pin].mode = mode
       write(PIN_MODE, pin, mode)
     end
