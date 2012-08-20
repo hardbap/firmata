@@ -365,14 +365,14 @@ module Firmata
     # Public: Turn pin analog and digital reporting on.
     #
     # Returns nothing.
-    def turn_pin_reporting_on
+    def start_pin_reporting
       toggle_pin_reporting(1)
     end
 
     # Public: Turn pin analog and digital reporting off.
     #
     # Returns nothing.
-    def turn_pin_reporting_off
+    def stop_pin_reporting
       toggle_pin_reporting(0)
     end
   end

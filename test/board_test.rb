@@ -109,7 +109,7 @@ class BoardTest < MiniTest::Unit::TestCase
     assert_equal Firmata::Board::OUTPUT, board.pins[13].mode
   end
 
-  def test_write_turn_pin_reporting_on
+  def test_start_pin_reporting
     mock_sp = mock_serial_port do |mock|
       16.times do |i|
         mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | i, 1].map(&:chr).join])
@@ -118,12 +118,12 @@ class BoardTest < MiniTest::Unit::TestCase
     end
 
     board = Firmata::Board.new(mock_sp)
-    board.turn_pin_reporting_on
+    board.start_pin_reporting
 
     mock_sp.verify
   end
 
-  def test_turn_pin_reporting_off
+  def test_stop_pin_reporting
     mock_sp = mock_serial_port do |mock|
       16.times do |i|
         mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | i, 0].map(&:chr).join])
@@ -132,7 +132,7 @@ class BoardTest < MiniTest::Unit::TestCase
     end
 
     board = Firmata::Board.new(mock_sp)
-    board.turn_pin_reporting_off
+    board.stop_pin_reporting
 
     mock_sp.verify
   end
