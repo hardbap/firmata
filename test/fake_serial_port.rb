@@ -40,6 +40,7 @@ class FakeSerialPort
     @buffer << val
     val.length
   end
+  alias_method :write_nonblock, :write
 
   def bytes
     bytes = StringIO.new(@buffer).bytes
@@ -47,7 +48,8 @@ class FakeSerialPort
     bytes
   end
 
-  def read
-    @buffer.read
+  def read(size)
+    @buffer
   end
+  alias_method :read_nonblock, :read
 end

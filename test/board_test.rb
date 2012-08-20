@@ -15,7 +15,7 @@ class BoardTest < MiniTest::Unit::TestCase
       yield mock_port
     else
       expected = args.map(&:chr).join
-      mock_port.expect(:write, 1, [expected])
+      mock_port.expect(:write_nonblock, 1, [expected])
     end
 
     mock_port
@@ -75,13 +75,30 @@ class BoardTest < MiniTest::Unit::TestCase
     assert_equal 6, board.analog_pins.size
   end
 
-  def test_write_pin_mode
+  def test_processing_digital_message
+    board = Firmata::Board.new(FakeSerialPort.new)
+
+    board.query_capabilities
+    board.read_and_process
+
+    board.query_analog_mapping
+    board.read_and_process
+
+    pin = board.pins[8]
+    pin.mode = Firmata::Board::INPUT
+
+    board.process("\x91\x01\x00")
+
+    assert_equal Firmata::Board::HIGH, pin.value
+  end
+
+  def test_set_pin_mode
     mock_sp = mock_serial_port(Firmata::Board::PIN_MODE, 13, Firmata::Board::OUTPUT)
 
     board = Firmata::Board.new(mock_sp)
     board.pins[13] = Firmata::Board::Pin.new([0, 1, 4], 0, 0, nil)
 
-    board.pin_mode(13, Firmata::Board::OUTPUT)
+    board.set_pin_mode(13, Firmata::Board::OUTPUT)
 
     assert_equal Firmata::Board::OUTPUT, board.pins[13].mode
     mock_sp.verify
@@ -109,30 +126,30 @@ class BoardTest < MiniTest::Unit::TestCase
     assert_equal Firmata::Board::OUTPUT, board.pins[13].mode
   end
 
-  def test_write_turn_pin_reporting_on
+  def test_start_pin_reporting
     mock_sp = mock_serial_port do |mock|
       16.times do |i|
-        mock.expect(:write, 2, [[Firmata::Board::REPORT_DIGITAL | i, 1].map(&:chr).join])
-        mock.expect(:write, 2, [[(Firmata::Board::REPORT_ANALOG | i), 1].map(&:chr).join])
+        mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | i, 1].map(&:chr).join])
+        mock.expect(:write_nonblock, 2, [[(Firmata::Board::REPORT_ANALOG | i), 1].map(&:chr).join])
       end
     end
 
     board = Firmata::Board.new(mock_sp)
-    board.turn_pin_reporting_on
+    board.start_pin_reporting
 
     mock_sp.verify
   end
 
-  def test_turn_pin_reporting_off
+  def test_stop_pin_reporting
     mock_sp = mock_serial_port do |mock|
       16.times do |i|
-        mock.expect(:write, 2, [[Firmata::Board::REPORT_DIGITAL | i, 0].map(&:chr).join])
-        mock.expect(:write, 2, [[(Firmata::Board::REPORT_ANALOG | i), 0].map(&:chr).join])
+        mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | i, 0].map(&:chr).join])
+        mock.expect(:write_nonblock, 2, [[(Firmata::Board::REPORT_ANALOG | i), 0].map(&:chr).join])
       end
     end
 
     board = Firmata::Board.new(mock_sp)
-    board.turn_pin_reporting_off
+    board.stop_pin_reporting
 
     mock_sp.verify
   end

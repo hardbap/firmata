@@ -126,22 +126,24 @@ module Firmata
     #
     # Returns nothing.
     def write(*commands)
-      serial_port.write(commands.map(&:chr).join)
+      serial_port.write_nonblock(commands.map(&:chr).join)
     end
 
     # Internal: Read data from the underlying serial port.
     #
-    # Returns Enumerator of bytes.
+    # Returns String data read for serial port.
     def read
-      serial_port.bytes
+      serial_port.read_nonblock(4096)
+    rescue EOFError
     end
 
     # Internal: Process a series of bytes.
     #
-    # bytes: An Enumerator of bytes
+    # data: The String data to process.
     #
     # Returns nothing.
-    def process(bytes)
+    def process(data)
+      bytes = StringIO.new(String(data)).bytes
       bytes.each do |byte|
         case byte
         when REPORT_VERSION
@@ -159,6 +161,21 @@ module Firmata
 
           if analog_pin = analog_pins[pin]
             pins[analog_pin].value = value
+          end
+
+        when DIGITAL_MESSAGE_RANGE
+          port           = byte & 0x0F
+          first_bitmask  = bytes.next
+          second_bitmask = bytes.next
+          port_value     = first_bitmask | (second_bitmask << 7)
+
+          8.times do |i|
+            pin_number = 8 * port + i
+            if pin = pins[pin_number] and pin.mode == INPUT
+              value = (port_value >> (i & 0x07)) & 0x01
+              pin.value = value
+              emit('digital-read', pin_number, value)
+            end
           end
 
         when START_SYSEX
@@ -224,7 +241,7 @@ module Firmata
             emit('firmware_query')
 
           else
-            # TODO decide what to do with unknown message
+            puts 'bad byte'
           end
         end
       end
@@ -253,10 +270,10 @@ module Firmata
     #
     # Examples
     #
-    #   pin_mode(13, OUTPUT)
+    #   set_pin_mode(13, OUTPUT)
     #
     # Returns nothing.
-    def pin_mode(pin, mode)
+    def set_pin_mode(pin, mode)
       pins[pin].mode = mode
       write(PIN_MODE, pin, mode)
     end
@@ -334,6 +351,7 @@ module Firmata
       write(START_SYSEX, ANALOG_MAPPING_QUERY, END_SYSEX)
     end
 
+
     # Internal: Toggle the pin analog and digtal reporting off and on.
     #
     # state - The Integer to turn the pin on (1) or off (0).
@@ -349,14 +367,14 @@ module Firmata
     # Public: Turn pin analog and digital reporting on.
     #
     # Returns nothing.
-    def turn_pin_reporting_on
+    def start_pin_reporting
       toggle_pin_reporting(1)
     end
 
     # Public: Turn pin analog and digital reporting off.
     #
     # Returns nothing.
-    def turn_pin_reporting_off
+    def stop_pin_reporting
       toggle_pin_reporting(0)
     end
   end
