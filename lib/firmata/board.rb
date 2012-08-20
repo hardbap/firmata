@@ -143,7 +143,6 @@ module Firmata
     # Returns nothing.
     def process(bytes)
       bytes.each do |byte|
-        puts "byte: #{byte}"
         case byte
         when REPORT_VERSION
           @major_version = bytes.next
@@ -161,6 +160,9 @@ module Firmata
           if analog_pin = analog_pins[pin]
             pins[analog_pin].value = value
           end
+
+        when DIGITAL_MESSAGE_RANGE
+          puts "Digital Message: #{byte}"
 
         when START_SYSEX
           current_buffer = [byte]
@@ -334,6 +336,7 @@ module Firmata
     def query_analog_mapping
       write(START_SYSEX, ANALOG_MAPPING_QUERY, END_SYSEX)
     end
+
 
     # Internal: Toggle the pin analog and digtal reporting off and on.
     #
