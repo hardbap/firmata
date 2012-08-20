@@ -26,6 +26,9 @@ Or install it yourself as:
 4. Click the Upload button
 5. Make note of the serial port: Tools > Serial Port
 
+There have been reports of [issues](https://github.com/jgautier/firmata/issues/8) with Firmata 2.3.
+Try downgrading to [Firmata 2.2](http://at.or.at/hans/pd/Firmata-2.2.zip) if you're having a problem.
+
 ## Usage
 
 Here is a simple example using IRB that will turn pin 13 on and off.
