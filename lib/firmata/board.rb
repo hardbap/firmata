@@ -164,8 +164,10 @@ module Firmata
           end
 
         when DIGITAL_MESSAGE_RANGE
-          port = byte & 0x0F
-          port_value = bytes.next | (bytes.next << 7)
+          port           = byte & 0x0F
+          first_bitmask  = bytes.next
+          second_bitmask = bytes.next
+          port_value     = first_bitmask | (second_bitmask << 7)
 
           8.times do |i|
             pin_number = 8 * port + i

@@ -75,6 +75,23 @@ class BoardTest < MiniTest::Unit::TestCase
     assert_equal 6, board.analog_pins.size
   end
 
+  def test_processing_digital_message
+    board = Firmata::Board.new(FakeSerialPort.new)
+
+    board.query_capabilities
+    board.read_and_process
+
+    board.query_analog_mapping
+    board.read_and_process
+
+    pin = board.pins[8]
+    pin.mode = Firmata::Board::INPUT
+
+    board.process("\x91\x01\x00")
+
+    assert_equal Firmata::Board::HIGH, pin.value
+  end
+
   def test_set_pin_mode
     mock_sp = mock_serial_port(Firmata::Board::PIN_MODE, 13, Firmata::Board::OUTPUT)
 
