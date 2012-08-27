@@ -297,6 +297,18 @@ module Firmata
       write(DIGITAL_MESSAGE | port, port_value & 0x7F, (port_value >> 7) & 0x7F)
     end
 
+
+    # Public: Write an analog messege
+    #
+    # pin   - The Integer pin to write to.
+    # value - The Integer value to write to the pin between 0-255.
+    #
+    # Returns nothing.
+    def analog_write(pin, value)
+      @pins[pin].value = value
+      write(ANALOG_MESSAGE | pin, value & 0x7F, (value >> 7) & 0x7F)
+    end
+
     # Public: Ask the Arduino to sleep for a number of seconds.
     #
     # seconds - The Integer seconds to sleep for.

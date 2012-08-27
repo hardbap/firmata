@@ -210,7 +210,21 @@ class BoardTest < MiniTest::Unit::TestCase
 
     board.digital_write(13, 1)
 
+    assert_equal 1, board.pins[13].value, "Pin value not set"
     mock_sp.verify
   end
 
+  def test_analog_write
+    mock_sp = mock_serial_port(233, 127, 1)
+    board = Firmata::Board.new(mock_sp)
+
+    8.times do |x|
+      board.pins[x + 8] = Firmata::Board::Pin.new([], 0, 250 + x, nil)
+    end
+
+    board.analog_write(9, 255)
+
+    assert_equal 255, board.pins[9].value
+    mock_sp.verify
+  end
 end
