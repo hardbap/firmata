@@ -227,4 +227,9 @@ class BoardTest < MiniTest::Unit::TestCase
     assert_equal 255, board.pins[9].value
     mock_sp.verify
   end
+
+  def test_servo_write
+    board = Firmata::Board.new(FakeSerialPort.new)
+    assert board.respond_to? :servo_write
+  end
 end
