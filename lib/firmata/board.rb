@@ -6,7 +6,7 @@ module Firmata
     include EventSpitter
 
     # Internal: Data structure representing a pin on Arduino.
-    Pin = Struct.new(:supportedModes, :mode, :value, :analog_channel)
+    Pin = Struct.new(:supported_modes, :mode, :value, :analog_channel)
 
     # Public: Fixnum byte for pin mode input.
     INPUT = 0x00
@@ -396,5 +396,7 @@ module Firmata
     def stop_pin_reporting
       toggle_pin_reporting(0)
     end
+
+
   end
 end
