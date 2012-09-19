@@ -89,7 +89,7 @@ module Firmata
       @connected
     end
 
-    # Public: Make connection to Arduio.
+    # Public: Make connection to Arduino.
     #
     # Returns Firmata::Board board.
     def connect
