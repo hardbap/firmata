@@ -1,7 +1,7 @@
 require 'bundler/setup'
 require 'firmata'
 
-board = Firmata::Board.new('/dev/tty.usbmodemfd13131')
+board = Firmata::Board.new('/dev/tty.usbmodemfa131')
 
 board.connect
 
