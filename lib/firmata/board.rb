@@ -175,6 +175,7 @@ module Firmata
               value = (port_value >> (i & 0x07)) & 0x01
               pin.value = value
               emit('digital-read', pin_number, value)
+              emit("digital-read-#{pin_number}", value)
             end
           end
 
