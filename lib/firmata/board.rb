@@ -189,25 +189,25 @@ module Firmata
 
           case command
           when CAPABILITY_RESPONSE
-            supportedModes = 0
+            supported_modes = 0
             n = 0
 
             current_buffer.slice(2, current_buffer.length - 3).each do |byte|
               if byte == 127
-                modesArray = []
+                modes = []
                 # the pin modes
                 [ INPUT, OUTPUT, ANALOG, PWM, SERVO ].each do |mode|
-                   modesArray.push(mode) unless (supportedModes & (1 << mode)).zero?
+                   modes.push(mode) unless (supported_modes & (1 << mode)).zero?
                 end
 
-                @pins.push(Pin.new(modesArray, OUTPUT, 0))
+                @pins.push(Pin.new(modes, OUTPUT, 0))
 
-                supportedModes = 0
+                supported_modes = 0
                 n = 0
                 next
               end
 
-              supportedModes |= (1 << byte) if n.zero?
+              supported_modes |= (1 << byte) if n.zero?
 
               n ^= 1
             end
