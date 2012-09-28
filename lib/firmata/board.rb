@@ -98,6 +98,9 @@ module Firmata
           once('firmware_query', ->() do
             once('capability_query', ->() do
               once('analog_mapping_query', ->() do
+
+                2.times { |i| toggle_pin_reporting(i) }
+
                 @connected = true
                 emit('ready')
               end)
@@ -161,6 +164,9 @@ module Firmata
 
           if analog_pin = analog_pins[pin]
             pins[analog_pin].value = value
+
+            emit('analog-read', pin, value)
+            emit("analog-read-#{pin}", value)
           end
 
         when DIGITAL_MESSAGE_RANGE
@@ -371,33 +377,18 @@ module Firmata
       write(START_SYSEX, ANALOG_MAPPING_QUERY, END_SYSEX)
     end
 
-
-    # Internal: Toggle the pin analog and digtal reporting off and on.
+    # Public: Toggle pin reporting on or off.
     #
-    # state - The Integer to turn the pin on (1) or off (0).
-    #
-    # Returns nothing.
-    def toggle_pin_reporting(state)
-      16.times do |i|
-        write(REPORT_DIGITAL | i, state)
-        write(REPORT_ANALOG | i, state)
-      end
-    end
-
-    # Public: Turn pin analog and digital reporting on.
+    # pin   - The Integer pin to toggle.
+    # mode  - The Integer mode the pin will report. The valid values are
+    #         REPORT_DIGITAL or REPORT_ANALOG (default: REPORT_DIGITAL).
+    # state - The Integer state to toggle the pin. The valid value are
+    #         HIGH or LOW (default: HIGH)
     #
     # Returns nothing.
-    def start_pin_reporting
-      toggle_pin_reporting(1)
+    def toggle_pin_reporting(pin, state = HIGH, mode = REPORT_DIGITAL)
+      write(mode | pin, state)
     end
-
-    # Public: Turn pin analog and digital reporting off.
-    #
-    # Returns nothing.
-    def stop_pin_reporting
-      toggle_pin_reporting(0)
-    end
-
 
   end
 end

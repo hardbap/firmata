@@ -126,32 +126,21 @@ class BoardTest < MiniTest::Unit::TestCase
     assert_equal Firmata::Board::OUTPUT, board.pins[13].mode
   end
 
-  def test_start_pin_reporting
+
+  def test_toggling_pin_reporting
     mock_sp = mock_serial_port do |mock|
-      16.times do |i|
-        mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | i, 1].map(&:chr).join])
-        mock.expect(:write_nonblock, 2, [[(Firmata::Board::REPORT_ANALOG | i), 1].map(&:chr).join])
-      end
+      mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | 13, 1].map(&:chr).join])
     end
 
     board = Firmata::Board.new(mock_sp)
-    board.start_pin_reporting
 
+    board.toggle_pin_reporting(13)
     mock_sp.verify
-  end
 
-  def test_stop_pin_reporting
-    mock_sp = mock_serial_port do |mock|
-      16.times do |i|
-        mock.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | i, 0].map(&:chr).join])
-        mock.expect(:write_nonblock, 2, [[(Firmata::Board::REPORT_ANALOG | i), 0].map(&:chr).join])
-      end
-    end
-
-    board = Firmata::Board.new(mock_sp)
-    board.stop_pin_reporting
-
+    mock_sp.expect(:write_nonblock, 2, [[Firmata::Board::REPORT_DIGITAL | 13, 0].map(&:chr).join])
+    board.toggle_pin_reporting(13, 0)
     mock_sp.verify
+
   end
 
   def test_processing_analog_message
