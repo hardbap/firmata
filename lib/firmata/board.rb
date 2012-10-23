@@ -1,3 +1,4 @@
+require 'stringio'
 require 'serialport'
 require 'event_spitter'
 
