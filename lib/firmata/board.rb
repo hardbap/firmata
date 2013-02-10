@@ -86,6 +86,8 @@ module Firmata
       @pins = []
       @analog_pins = []
       @connected = false
+    rescue LoadError
+      puts "Please 'gem install hybridgroup-serialport' for serial port support."
     end
 
     # Pubilc: Check if a connection to Arduino has been made.
