@@ -1,7 +1,10 @@
 require 'bundler/setup'
 require 'firmata'
+require 'socket'
 
-board = Firmata::Board.new('/dev/tty.usbmodemfa131')
+sp = TCPSocket.open 'localhost', 4567
+#sp = '/dev/tty.usbserial-A700636n'
+board = Firmata::Board.new(sp)
 
 board.connect
 

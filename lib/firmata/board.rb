@@ -1,5 +1,4 @@
 require 'stringio'
-require 'serialport'
 require 'event_spitter'
 
 module Firmata
@@ -74,8 +73,14 @@ module Firmata
     #
     # port - a String port or an Object that responds to read and write.
     def initialize(port)
-      @serial_port = port.is_a?(String) ? SerialPort.new(port, 57600, 8, 1, SerialPort::NONE) : port
-      @serial_port.read_timeout = 2
+      if port.is_a?(String)
+        require 'serialport'
+        @serial_port = SerialPort.new(port, 57600, 8, 1, SerialPort::NONE)
+        @serial_port.read_timeout = 2
+      else
+        @serial_port = port
+      end
+
       @major_version = 0
       @minor_version = 0
       @pins = []
@@ -139,6 +144,7 @@ module Firmata
     def read
       serial_port.read_nonblock(4096)
     rescue EOFError
+    rescue Errno::EAGAIN
     end
 
     # Internal: Process a series of bytes.

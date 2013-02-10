@@ -8,7 +8,6 @@ class BoardTest < MiniTest::Unit::TestCase
 
   def mock_serial_port(*args, &block)
     mock_port = MiniTest::Mock.new
-    mock_port.expect(:read_timeout=, 2, [2])
     mock_port.expect(:is_a?, false, [nil])
 
     if block_given?
