@@ -8,6 +8,9 @@ board = Firmata::Board.new(sp)
 
 board.connect
 
+puts "Firmware name #{board.firmware_name}"
+puts "Firmata version #{board.version}"
+
 pin_number = 3
 rate = 0.5
 

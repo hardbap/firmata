@@ -144,7 +144,7 @@ module Firmata
     #
     # Returns String data read for serial port.
     def read
-      serial_port.read_nonblock(4096)
+      return serial_port.read_nonblock(1024)
     rescue EOFError
     rescue Errno::EAGAIN
     end
@@ -155,18 +155,17 @@ module Firmata
     #
     # Returns nothing.
     def process(data)
-      bytes = StringIO.new(String(data)).bytes
-      bytes.each do |byte|
+      bytes = StringIO.new(String(data))
+      while byte = bytes.getbyte
         case byte
         when REPORT_VERSION
-          @major_version = bytes.next
-          @minor_version = bytes.next
-
+          @major_version = bytes.getbyte
+          @minor_version = bytes.getbyte
           emit('report_version')
 
         when ANALOG_MESSAGE_RANGE
-          least_significant_byte = bytes.next
-          most_significant_byte = bytes.next
+          least_significant_byte = bytes.getbyte
+          most_significant_byte = bytes.getbyte
 
           value = least_significant_byte | (most_significant_byte << 7)
           pin = byte & 0x0F
@@ -180,8 +179,8 @@ module Firmata
 
         when DIGITAL_MESSAGE_RANGE
           port           = byte & 0x0F
-          first_bitmask  = bytes.next
-          second_bitmask = bytes.next
+          first_bitmask  = bytes.getbyte
+          second_bitmask = bytes.getbyte
           port_value     = first_bitmask | (second_bitmask << 7)
 
           8.times do |i|
@@ -197,7 +196,7 @@ module Firmata
         when START_SYSEX
           current_buffer = [byte]
           begin
-            current_buffer.push(bytes.next)
+            current_buffer.push(bytes.getbyte)
           end until current_buffer.last == END_SYSEX
 
           command = current_buffer[1]
