@@ -271,9 +271,9 @@ module Firmata
             #  * ...
             #  * n  END_SYSEX (0xF7)
             #  */            
-            i2c_reply{
-              :slave_address => current_buffer[2,2].pack("CC").unpack("v").first
-              :register => current_buffer[4,2].pack("CC").unpack("v").first
+            i2c_reply = {
+              :slave_address => current_buffer[2,2].pack("CC").unpack("v").first,
+              :register => current_buffer[4,2].pack("CC").unpack("v").first,
               :data => [current_buffer[6,2].pack("CC").unpack("v").first]
             }
             i = 8
