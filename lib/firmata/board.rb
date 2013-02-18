@@ -277,7 +277,7 @@ module Firmata
               :data => [current_buffer[6,2].pack("CC").unpack("v").first]
             }
             i = 8
-            while current_buffer[8] != "0xF7".hex do
+            while current_buffer[i] != "0xF7".hex do
               i2c_reply[:data].push(current_buffer[i,2].pack("CC").unpack("v").first)
               i += 2
             end
