@@ -65,6 +65,14 @@ module Firmata
     I2C_CONFIG = 0x78
     # Internal: Fixnum byte sysex command for firmware query and response
     FIRMWARE_QUERY = 0x79
+    # Internal: Fixnum byte i2c mode write
+    I2C_MODE_WRITE = 0x00
+    # Internal: Fixnum byte i2c mode read
+    I2C_MODE_READ = 0x01
+    # Internal: Fixnum byte i2c mode continous read
+    I2C_MODE_CONTINUOUS_READ = 0x02
+    # Internal: Fixnum byte i2c mode stop reading
+    I2C_MODE_STOP_READING = 0x03
 
     # Public: Returns the SerialPort port the Arduino is attached to.
     attr_reader :serial_port
@@ -449,12 +457,18 @@ module Firmata
     # * n  END_SYSEX (0xF7)
     # */
     # Returns nothing.
-    def i2c_request(slave_address, data)
-      request = [slave_address].pack("v")
+    def i2c_read_request(slave_address, num_bytes)
+      address = [slave_address].pack("v")
+      write(START_SYSEX, I2C_REQUEST, address, (I2C_MODE_READ << 3), num_bytes & 0x7F, ((num_bytes >> 7) & 0x7F), END_SYSEX)
+    end
+
+    def i2c_write_request(slave_address, *data)
+      address = [slave_address].pack("v")
+      request = ""
       data.each do |n|
         request += [n].pack("v")
       end
-      write(START_SYSEX, I2C_REQUEST, request, END_SYSEX)
+      write(START_SYSEX, I2C_REQUEST, address, (I2C_MODE_WRITE << 3), request, END_SYSEX)
     end
 
     # Public: Set i2c config.
@@ -469,7 +483,8 @@ module Firmata
     # * n  END_SYSEX (0xF7)
     # */
     # Returns nothing.
-    def i2c_config(data)
+    def i2c_config(*data)
+      request = ""
       data.each do |n|
         request += [n].pack("v")
       end
