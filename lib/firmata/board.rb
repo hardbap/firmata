@@ -258,7 +258,6 @@ module Firmata
             pin.value |= (current_buffer[6] << 14) if current_buffer.size > 7
 
           when I2C_REPLY
-            #TODO: parse reply
             # * I2C reply
             #  * -------------------------------
             #  * 0  START_SYSEX (0xF0) (MIDI System Exclusive)
@@ -272,7 +271,17 @@ module Firmata
             #  * ...
             #  * n  END_SYSEX (0xF7)
             #  */            
-            emit('i2c_reply')
+            i2c_reply{
+              :slave_address => current_buffer[2,2].pack("CC").unpack("v").first
+              :register => current_buffer[4,2].pack("CC").unpack("v").first
+              :data => [current_buffer[6,2].pack("CC").unpack("v").first]
+            }
+            i = 8
+            while current_buffer[8] != "0xF7".hex do
+              i2c_reply[:data].push(current_buffer[i,2].pack("CC").unpack("v").first)
+              i += 2
+            end
+            emit('i2c_reply', i2c_reply)
 
           when FIRMWARE_QUERY
             @firmware_name = current_buffer.slice(4, current_buffer.length - 5).reject { |b| b.zero? }.map(&:chr).join
@@ -441,8 +450,11 @@ module Firmata
     # */
     # Returns nothing.
     def i2c_request(slave_address, data)
-      #TODO: actual request
-      write(START_SYSEX, I2C_REQUEST, END_SYSEX)
+      request = [slave_address].pack("v")
+      data.each do |n|
+        request += [n].pack("v")
+      end
+      write(START_SYSEX, I2C_REQUEST, request, END_SYSEX)
     end
 
     # Public: Set i2c config.
@@ -457,9 +469,11 @@ module Firmata
     # * n  END_SYSEX (0xF7)
     # */
     # Returns nothing.
-    def i2c_request(slave_address, data)
-      #TODO: actual request
-      write(START_SYSEX, I2C_CONFIG, END_SYSEX)
+    def i2c_config(data)
+      data.each do |n|
+        request += [n].pack("v")
+      end
+      write(START_SYSEX, I2C_CONFIG, request, END_SYSEX)
     end
 
   end
