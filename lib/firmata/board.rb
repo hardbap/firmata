@@ -286,6 +286,7 @@ module Firmata
             }
             i = 8
             while current_buffer[i] != "0xF7".hex do
+              break if !(!current_buffer[i,2].nil? && current_buffer[i,2].count == 2)
               i2c_reply[:data].push(current_buffer[i,2].pack("CC").unpack("v").first)
               i += 2
             end
@@ -464,12 +465,13 @@ module Firmata
 
     def i2c_write_request(slave_address, *data)
       address = [slave_address].pack("v")
-      rec = ''
+      ret = [START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_WRITE << 3)] 
       data.each do |n|
-        rec << n
+        ret.push([n].pack("v")[0])
+        ret.push([n].pack("v")[1])
       end
-        
-      write(START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_WRITE << 3), rec, END_SYSEX)
+      ret.push(END_SYSEX)
+      write(*ret)
     end
 
     # Public: Set i2c config.
@@ -485,11 +487,13 @@ module Firmata
     # */
     # Returns nothing.
     def i2c_config(*data)
-      config = "" 
+      ret = [START_SYSEX, I2C_CONFIG]
       data.each do |n|
-       config << n
-      end 
-      write(START_SYSEX, I2C_CONFIG, config, END_SYSEX)
+        ret.push([n].pack("v")[0])
+        ret.push([n].pack("v")[1])
+      end
+      ret.push(END_SYSEX)
+      write(*ret)
     end
   end
 end
