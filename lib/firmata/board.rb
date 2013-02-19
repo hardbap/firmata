@@ -459,16 +459,17 @@ module Firmata
     # Returns nothing.
     def i2c_read_request(slave_address, num_bytes)
       address = [slave_address].pack("v")
-      write(START_SYSEX, I2C_REQUEST, address, (I2C_MODE_READ << 3), num_bytes & 0x7F, ((num_bytes >> 7) & 0x7F), END_SYSEX)
+      write(START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_READ << 3), num_bytes & 0x7F, ((num_bytes >> 7) & 0x7F), END_SYSEX)
     end
 
     def i2c_write_request(slave_address, *data)
       address = [slave_address].pack("v")
-      request = ""
+      rec = ''
       data.each do |n|
-        request += [n].pack("v")
+        rec << n
       end
-      write(START_SYSEX, I2C_REQUEST, address, (I2C_MODE_WRITE << 3), request, END_SYSEX)
+        
+      write(START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_WRITE << 3), rec, END_SYSEX)
     end
 
     # Public: Set i2c config.
@@ -484,12 +485,11 @@ module Firmata
     # */
     # Returns nothing.
     def i2c_config(*data)
-      request = ""
+      config = "" 
       data.each do |n|
-        request += [n].pack("v")
-      end
-      write(START_SYSEX, I2C_CONFIG, request, END_SYSEX)
+       config << n
+      end 
+      write(START_SYSEX, I2C_CONFIG, config, END_SYSEX)
     end
-
   end
 end
