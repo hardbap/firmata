@@ -57,8 +57,22 @@ module Firmata
     ANALOG_MAPPING_QUERY    = 0x69
     # Internal: Fixnum byte sysex command for analog mapping response
     ANALOG_MAPPING_RESPONSE = 0x6A
+    # Internal: Fixnum byte sysex command for i2c request
+    I2C_REQUEST = 0x76
+    # Internal: Fixnum byte sysex command for i2c reply
+    I2C_REPLY = 0x77
+    # Internal: Fixnum byte sysex command for i2c config
+    I2C_CONFIG = 0x78
     # Internal: Fixnum byte sysex command for firmware query and response
     FIRMWARE_QUERY = 0x79
+    # Internal: Fixnum byte i2c mode write
+    I2C_MODE_WRITE = 0x00
+    # Internal: Fixnum byte i2c mode read
+    I2C_MODE_READ = 0x01
+    # Internal: Fixnum byte i2c mode continous read
+    I2C_MODE_CONTINUOUS_READ = 0x02
+    # Internal: Fixnum byte i2c mode stop reading
+    I2C_MODE_STOP_READING = 0x03
 
     # Public: Returns the SerialPort port the Arduino is attached to.
     attr_reader :serial_port
@@ -251,6 +265,30 @@ module Firmata
 
             pin.value |= (current_buffer[6] << 14) if current_buffer.size > 7
 
+          when I2C_REPLY
+            # I2C reply
+            # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+            # 1  I2C_REPLY (0x77)
+            # 2  slave address (LSB)
+            # 3  slave address (MSB)
+            # 4  register (LSB)
+            # 5  register (MSB)
+            # 6  data 0 LSB
+            # 7  data 0 MSB
+            # n  END_SYSEX (0xF7)
+            i2c_reply = {
+              :slave_address => current_buffer[2,2].pack("CC").unpack("v").first,
+              :register => current_buffer[4,2].pack("CC").unpack("v").first,
+              :data => [current_buffer[6,2].pack("CC").unpack("v").first]
+            }
+            i = 8
+            while current_buffer[i] != "0xF7".hex do
+              break if !(!current_buffer[i,2].nil? && current_buffer[i,2].count == 2)
+              i2c_reply[:data].push(current_buffer[i,2].pack("CC").unpack("v").first)
+              i += 2
+            end
+            emit('i2c_reply', i2c_reply)
+
           when FIRMWARE_QUERY
             @firmware_name = current_buffer.slice(4, current_buffer.length - 5).reject { |b| b.zero? }.map(&:chr).join
             emit('firmware_query')
@@ -397,6 +435,55 @@ module Firmata
     def toggle_pin_reporting(pin, state = HIGH, mode = REPORT_DIGITAL)
       write(mode | pin, state)
     end
+    # Public: Make an i2c request.
+    #
+    # I2C read/write request
+    #
+    # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+    # 1  I2C_REQUEST (0x76)
+    # 2  slave address (LSB)
+    # 3  slave address (MSB) + read/write and address mode bits
+    #      {7: always 0} + {6: reserved} + {5: address mode, 1 means 10-bit mode} +
+    #      {4-3: read/write, 00 => write, 01 => read once, 10 => read continuously, 11 => stop reading} +
+    #      {2-0: slave address MSB in 10-bit mode, not used in 7-bit mode}
+    # 4  data 0 (LSB)
+    # 5  data 0 (MSB)
+    # 6  data 1 (LSB)
+    # 7  data 1 (MSB)
+    # n  END_SYSEX (0xF7)
+    # Returns nothing.
+    def i2c_read_request(slave_address, num_bytes)
+      address = [slave_address].pack("v")
+      write(START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_READ << 3), num_bytes & 0x7F, ((num_bytes >> 7) & 0x7F), END_SYSEX)
+    end
 
+    def i2c_write_request(slave_address, *data)
+      address = [slave_address].pack("v")
+      ret = [START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_WRITE << 3)] 
+      data.each do |n|
+        ret.push([n].pack("v")[0])
+        ret.push([n].pack("v")[1])
+      end
+      ret.push(END_SYSEX)
+      write(*ret)
+    end
+    # Public: Set i2c config.
+    #   I2C config
+    # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+    # 1  I2C_CONFIG (0x78)
+    # 2  Delay in microseconds (LSB)
+    # 3  Delay in microseconds (MSB)
+    # ... user defined for special cases, etc
+    # n  END_SYSEX (0xF7)
+    # Returns nothing.
+    def i2c_config(*data)
+      ret = [START_SYSEX, I2C_CONFIG]
+      data.each do |n|
+        ret.push([n].pack("v")[0])
+        ret.push([n].pack("v")[1])
+      end
+      ret.push(END_SYSEX)
+      write(*ret)
+    end
   end
 end
