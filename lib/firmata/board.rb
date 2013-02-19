@@ -266,19 +266,16 @@ module Firmata
             pin.value |= (current_buffer[6] << 14) if current_buffer.size > 7
 
           when I2C_REPLY
-            # * I2C reply
-            #  * -------------------------------
-            #  * 0  START_SYSEX (0xF0) (MIDI System Exclusive)
-            #  * 1  I2C_REPLY (0x77)
-            #  * 2  slave address (LSB)
-            #  * 3  slave address (MSB)
-            #  * 4  register (LSB)
-            #  * 5  register (MSB)
-            #  * 6  data 0 LSB
-            #  * 7  data 0 MSB
-            #  * ...
-            #  * n  END_SYSEX (0xF7)
-            #  */            
+            # I2C reply
+            # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+            # 1  I2C_REPLY (0x77)
+            # 2  slave address (LSB)
+            # 3  slave address (MSB)
+            # 4  register (LSB)
+            # 5  register (MSB)
+            # 6  data 0 LSB
+            # 7  data 0 MSB
+            # n  END_SYSEX (0xF7)
             i2c_reply = {
               :slave_address => current_buffer[2,2].pack("CC").unpack("v").first,
               :register => current_buffer[4,2].pack("CC").unpack("v").first,
@@ -438,25 +435,22 @@ module Firmata
     def toggle_pin_reporting(pin, state = HIGH, mode = REPORT_DIGITAL)
       write(mode | pin, state)
     end
-
     # Public: Make an i2c request.
     #
-    #    /* I2C read/write request
-    # * -------------------------------
-    # * 0  START_SYSEX (0xF0) (MIDI System Exclusive)
-    # * 1  I2C_REQUEST (0x76)
-    # * 2  slave address (LSB)
-    # * 3  slave address (MSB) + read/write and address mode bits
+    # I2C read/write request
+    #
+    # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+    # 1  I2C_REQUEST (0x76)
+    # 2  slave address (LSB)
+    # 3  slave address (MSB) + read/write and address mode bits
     #      {7: always 0} + {6: reserved} + {5: address mode, 1 means 10-bit mode} +
     #      {4-3: read/write, 00 => write, 01 => read once, 10 => read continuously, 11 => stop reading} +
     #      {2-0: slave address MSB in 10-bit mode, not used in 7-bit mode}
-    # * 4  data 0 (LSB)
-    # * 5  data 0 (MSB)
-    # * 6  data 1 (LSB)
-    # * 7  data 1 (MSB)
-    # * ...
-    # * n  END_SYSEX (0xF7)
-    # */
+    # 4  data 0 (LSB)
+    # 5  data 0 (MSB)
+    # 6  data 1 (LSB)
+    # 7  data 1 (MSB)
+    # n  END_SYSEX (0xF7)
     # Returns nothing.
     def i2c_read_request(slave_address, num_bytes)
       address = [slave_address].pack("v")
@@ -473,18 +467,14 @@ module Firmata
       ret.push(END_SYSEX)
       write(*ret)
     end
-
     # Public: Set i2c config.
-    #
-    #    /* I2C config
-    # * -------------------------------
-    # * 0  START_SYSEX (0xF0) (MIDI System Exclusive)
-    # * 1  I2C_CONFIG (0x78)
-    # * 2  Delay in microseconds (LSB)
-    # * 3  Delay in microseconds (MSB)
-    # * ... user defined for special cases, etc
-    # * n  END_SYSEX (0xF7)
-    # */
+    #   I2C config
+    # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+    # 1  I2C_CONFIG (0x78)
+    # 2  Delay in microseconds (LSB)
+    # 3  Delay in microseconds (MSB)
+    # ... user defined for special cases, etc
+    # n  END_SYSEX (0xF7)
     # Returns nothing.
     def i2c_config(*data)
       ret = [START_SYSEX, I2C_CONFIG]
