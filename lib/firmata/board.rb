@@ -82,6 +82,8 @@ module Firmata
     attr_reader :analog_pins
     # Public: Returns the String firmware name of Arduion.
     attr_reader :firmware_name
+    # Public: Returns array of any Events returned from 
+    attr_reader :async_events
 
     # Public: Initialize a Board
     #
@@ -100,6 +102,7 @@ module Firmata
       @pins = []
       @analog_pins = []
       @connected = false
+      @async_events = []
     rescue LoadError
       puts "Please 'gem install hybridgroup-serialport' for serial port support."
     end
@@ -109,6 +112,11 @@ module Firmata
     # Returns Boolean connected state.
     def connected?
       @connected
+    end
+
+    def event(name, *data)
+      async_events << Event.new(name, *data)
+      emit(name, *data)
     end
 
     # Public: Make connection to Arduino.
@@ -124,7 +132,7 @@ module Firmata
                 2.times { |i| toggle_pin_reporting(i) }
 
                 @connected = true
-                emit('ready')
+                event('ready')
               end)
               query_analog_mapping
            end)
@@ -175,7 +183,7 @@ module Firmata
         when REPORT_VERSION
           @major_version = bytes.getbyte
           @minor_version = bytes.getbyte
-          emit('report_version')
+          event('report_version')
 
         when ANALOG_MESSAGE_RANGE
           least_significant_byte = bytes.getbyte
@@ -187,8 +195,8 @@ module Firmata
           if analog_pin = analog_pins[pin]
             pins[analog_pin].value = value
 
-            emit('analog-read', pin, value)
-            emit("analog-read-#{pin}", value)
+            event('analog-read', pin, value)
+            event("analog-read-#{pin}", value)
           end
 
         when DIGITAL_MESSAGE_RANGE
@@ -202,8 +210,8 @@ module Firmata
             if pin = pins[pin_number] and pin.mode == INPUT
               value = (port_value >> (i & 0x07)) & 0x01
               pin.value = value
-              emit('digital-read', pin_number, value)
-              emit("digital-read-#{pin_number}", value)
+              event('digital-read', pin_number, value)
+              event("digital-read-#{pin_number}", value)
             end
           end
 
@@ -240,7 +248,7 @@ module Firmata
               n ^= 1
             end
 
-            emit('capability_query')
+            event('capability_query')
 
           when ANALOG_MAPPING_RESPONSE
             pin_index = 0
@@ -254,7 +262,7 @@ module Firmata
               pin_index += 1
             end
 
-            emit('analog_mapping_query')
+            event('analog_mapping_query')
 
           when PIN_STATE_RESPONSE
             pin       = pins[current_buffer[2]]
@@ -287,11 +295,11 @@ module Firmata
               i2c_reply[:data].push(current_buffer[i,2].pack("CC").unpack("v").first)
               i += 2
             end
-            emit('i2c_reply', i2c_reply)
+            event('i2c_reply', i2c_reply)
 
           when FIRMWARE_QUERY
             @firmware_name = current_buffer.slice(4, current_buffer.length - 5).reject { |b| b.zero? }.map(&:chr).join
-            emit('firmware_query')
+            event('firmware_query')
 
           else
             puts 'bad byte'
