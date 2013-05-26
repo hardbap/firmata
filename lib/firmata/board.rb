@@ -308,6 +308,8 @@ module Firmata
       end
     rescue StopIteration
       # do nadda
+    rescue NoMethodError
+      # got some bad data or something?
     end
 
     # Public: Read the serial port and process the results
