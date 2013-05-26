@@ -309,7 +309,7 @@ module Firmata
     rescue StopIteration
       # do nadda
     rescue NoMethodError
-      # got some bad data or something?
+      # got some bad data or something? hack to just skip to next attempt to process...
     end
 
     # Public: Read the serial port and process the results
