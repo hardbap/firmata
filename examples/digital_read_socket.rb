@@ -1,6 +1,7 @@
 require 'firmata'
+require 'socket'
 
-sp = '/dev/ttyACM0'
+sp = TCPSocket.open 'localhost', 4567
 board = Firmata::Board.new(sp)
 
 board.connect
@@ -17,7 +18,7 @@ board.set_pin_mode(pin_number, Firmata::Board::INPUT)
 board.toggle_pin_reporting(pin_number)
 
 while true do
-	puts "waiting..."
-	board.read_and_process
-	sleep 0.5
+  puts "waiting..."
+  board.read_and_process
+  sleep 0.5
 end

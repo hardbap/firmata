@@ -1,6 +1,7 @@
 require 'firmata'
+require 'socket'
 
-sp = '/dev/ttyACM0'
+sp = TCPSocket.open 'localhost', 4567
 board = Firmata::Board.new(sp)
 
 board.connect
