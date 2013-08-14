@@ -1,9 +1,9 @@
 require 'stringio'
-require 'event_spitter'
+require 'event_emitter'
 
 module Firmata
   class Board
-    include EventSpitter
+    include EventEmitter
 
     # Internal: Data structure representing a pin on Arduino.
     Pin = Struct.new(:supported_modes, :mode, :value, :analog_channel)
@@ -74,6 +74,9 @@ module Firmata
     # Internal: Fixnum byte i2c mode stop reading
     I2C_MODE_STOP_READING = 0x03
 
+    SERIAL_PORT_CLOSE = 0
+    SERIAL_PORT_OPEN = 1
+
     # Public: Returns the SerialPort port the Arduino is attached to.
     attr_reader :serial_port
     # Public: Returns the Array of pins on Arduino.
@@ -97,8 +100,10 @@ module Firmata
         @serial_port = port
       end
 
+      @serial_port_status = SERIAL_PORT_OPEN
       @major_version = 0
       @minor_version = 0
+      @firmware_name = nil
       @pins = []
       @analog_pins = []
       @connected = false
@@ -126,31 +131,49 @@ module Firmata
     # Returns Firmata::Board board.
     def connect
       unless @connected
-        once('report_version', ->() do
-          once('firmware_query', ->() do
-            once('capability_query', ->() do
-              once('analog_mapping_query', ->() do
-
-                2.times { |i| toggle_pin_reporting(i) }
-
-                @connected = true
-                event('ready')
-              end)
-              query_analog_mapping
-           end)
-            query_capabilities
-          end)
-        end)
-
-         until connected?
-          read_and_process
-          delay(0.5)
+        once :report_version do
+          query_capabilities
         end
-      end
 
-      self
+        once :firmware_query do
+
+        end
+
+        once :capability_query do
+          query_analog_mapping
+        end
+
+        once :analog_mapping_query do
+          2.times { |i| toggle_pin_reporting(i) }
+
+          @connected = true
+          event :ready
+        end
+
+        @thread_status = false
+        run do
+          @thread_status = true
+          while @serial_port_status == SERIAL_PORT_OPEN do
+            process(read)
+            sleep 0.01
+          end
+          @thread_status = false
+        end
+
+        loop do 
+          query_report_version
+          sleep 0.1
+          break if @major_version > 0
+        end
+
+        self
+      end
     end
 
+    def run(&block)
+      return unless block_given?
+      Thread.new &block
+    end
     # Internal: Write data to the underlying serial port.
     #
     # commands - Zero or more byte commands to be written.
@@ -185,8 +208,7 @@ module Firmata
         when REPORT_VERSION
           @major_version = bytes.getbyte
           @minor_version = bytes.getbyte
-          event('report_version')
-
+          event :report_version
         when ANALOG_MESSAGE_RANGE
           least_significant_byte = bytes.getbyte
           most_significant_byte = bytes.getbyte
@@ -197,8 +219,8 @@ module Firmata
           if analog_pin = analog_pins[pin]
             pins[analog_pin].value = value
 
-            event('analog-read', pin, value)
-            event("analog-read-#{pin}", value)
+            event :analog_read, pin, value
+            event("analog_read_#{pin}", value)
           end
 
         when DIGITAL_MESSAGE_RANGE
@@ -212,8 +234,8 @@ module Firmata
             if pin = pins[pin_number] and pin.mode == INPUT
               value = (port_value >> (i & 0x07)) & 0x01
               pin.value = value
-              event('digital-read', pin_number, value)
-              event("digital-read-#{pin_number}", value)
+              event :digital_read, pin_number, value
+              event "digital_read_#{pin_number}", value
             end
           end
 
@@ -250,7 +272,7 @@ module Firmata
               n ^= 1
             end
 
-            event('capability_query')
+            event :capability_query
 
           when ANALOG_MAPPING_RESPONSE
             pin_index = 0
@@ -263,8 +285,8 @@ module Firmata
 
               pin_index += 1
             end
-
-            event('analog_mapping_query')
+  
+            event :analog_mapping_query
 
           when PIN_STATE_RESPONSE
             pin       = pins[current_buffer[2]]
@@ -297,12 +319,11 @@ module Firmata
               i2c_reply[:data].push(current_buffer[i,2].pack("CC").unpack("v").first)
               i += 2
             end
-            event('i2c_reply', i2c_reply)
+            event :i2c_reply, i2c_reply
 
           when FIRMWARE_QUERY
             @firmware_name = current_buffer.slice(4, current_buffer.length - 5).reject { |b| b.zero? }.map(&:chr).join
-            event('firmware_query')
-
+            event :firmware_query
           else
             puts 'bad byte'
           end
@@ -421,6 +442,11 @@ module Firmata
       write(START_SYSEX, PIN_STATE_QUERY, pin.to_i, END_SYSEX)
     end
 
+    #
+    def query_report_version
+      write REPORT_VERSION
+    end
+
     # Public: Ask the Arduino about its capabilities and current state.
     #
     # Returns nothing.
@@ -509,9 +535,11 @@ module Firmata
     end
 
     def close
+      return if @serial_port_status == SERIAL_PORT_CLOSE
+      @serial_port_status = SERIAL_PORT_CLOSE
       @serial_port.close
       loop do
-        break if @serial_port.closed?
+        break if @serial_port.closed? and !@thread_status
         sleep 0.01
       end
     end
