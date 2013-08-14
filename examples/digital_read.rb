@@ -22,7 +22,7 @@ board.on :digital_read_2 do |value|
   puts "Pin 2: #{value}"
 end
 
-board.set_pin_mode(pin_number, Firmata::Board::INPUT)
+board.set_pin_mode(pin_number, Firmata::PinModes::INPUT)
 board.toggle_pin_reporting(pin_number)
 
 puts "Press Ctrl-C to stop..."

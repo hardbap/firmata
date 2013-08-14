@@ -15,11 +15,11 @@ pin_number = 13
 rate = 0.5
 
 10.times do
-  board.digital_write pin_number, Firmata::Board::HIGH
+  board.digital_write pin_number, Firmata::PinLevels::HIGH
   puts '+'
   board.delay rate
 
-  board.digital_write pin_number, Firmata::Board::LOW
+  board.digital_write pin_number, Firmata::PinLevels::LOW
   puts '-'
   board.delay rate
 end
