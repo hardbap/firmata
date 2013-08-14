@@ -154,7 +154,7 @@ module Firmata
         run do
           @thread_status = true
           while @serial_port_status == SERIAL_PORT_OPEN do
-            process(read)
+            read_and_process
             sleep 0.01
           end
           @thread_status = false
