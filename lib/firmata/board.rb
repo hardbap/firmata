@@ -1,5 +1,6 @@
 require 'stringio'
 require 'event_spitter'
+require "firmata/event"
 
 module Firmata
   class Board
@@ -82,7 +83,7 @@ module Firmata
     attr_reader :analog_pins
     # Public: Returns the String firmware name of Arduion.
     attr_reader :firmware_name
-    # Public: Returns array of any Events returned from 
+    # Public: Returns array of any Events returned from
     attr_reader :async_events
 
     # Public: Initialize a Board
@@ -469,7 +470,7 @@ module Firmata
 
     def i2c_write_request(slave_address, *data)
       address = [slave_address].pack("v")
-      ret = [START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_WRITE << 3)] 
+      ret = [START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_WRITE << 3)]
       data.each do |n|
         ret.push([n].pack("v")[0])
         ret.push([n].pack("v")[1])
