@@ -8,84 +8,15 @@ module Firmata
     # Internal: Data structure representing a pin on Arduino.
     Pin = Struct.new(:supported_modes, :mode, :value, :analog_channel)
 
-    # Public: Fixnum byte for pin mode input.
-    INPUT = 0x00
-    # Public: Fixnum byte for pin mode output.
-    OUTPUT = 0x01
-    # Public: Fixnum byte for pin mode analog.
-    ANALOG = 0x02
-    # Public: Fixnum byte for pin mode pulse width modulation.
-    PWM = 0x03
-    # Public: Fixnum byte for pin mode servo.
-    SERVO = 0x04
-
-    LOW  = 0
-    HIGH = 1
-
-    # Internal: Fixnum byte command for protocol version
-    REPORT_VERSION = 0xF9
-    # Internal: Fixnum byte command for system reset
-    SYSTEM_RESET = 0xFF
-    # Internal: Fixnum byte command for digital I/O message
-    DIGITAL_MESSAGE = 0x90
-    # Pubilc: Fixnum byte for range for digital pins for digital 2 byte data format
-    DIGITAL_MESSAGE_RANGE = 0x90..0x9F
-    # Internal: Fixnum byte command for an analog I/O message
-    ANALOG_MESSAGE = 0xE0
-    # Internal: Fixnum byte range for analog pins for analog 14-bit data format
-    ANALOG_MESSAGE_RANGE = 0xE0..0xEF
-    # Internal: Fixnum byte command to report analog pin
-    REPORT_ANALOG = 0xC0
-    # Internal: Fixnum byte command to report digital port
-    REPORT_DIGITAL = 0xD0
-    # Internal: Fixnum byte command to set pin mode (I/O)
-    PIN_MODE  = 0xF4
-
-    # Internal: Fixnum byte command for start of Sysex message
-    START_SYSEX = 0xF0
-    # Internal: Fixnum byte command for end of Sysex message
-    END_SYSEX = 0xF7
-    # Internal: Fixnum byte sysex command for capabilities query
-    CAPABILITY_QUERY = 0x6B
-    # Internal: Fixnum byte sysex command for capabilities response
-    CAPABILITY_RESPONSE = 0x6C
-    # Internal: Fixnum byte sysex command for pin state query
-    PIN_STATE_QUERY = 0x6D
-    # Internal: Fixnum byte sysex command for pin state response
-    PIN_STATE_RESPONSE = 0x6E
-    # Internal: Fixnum byte sysex command for analog mapping query
-    ANALOG_MAPPING_QUERY    = 0x69
-    # Internal: Fixnum byte sysex command for analog mapping response
-    ANALOG_MAPPING_RESPONSE = 0x6A
-    # Internal: Fixnum byte sysex command for i2c request
-    I2C_REQUEST = 0x76
-    # Internal: Fixnum byte sysex command for i2c reply
-    I2C_REPLY = 0x77
-    # Internal: Fixnum byte sysex command for i2c config
-    I2C_CONFIG = 0x78
-    # Internal: Fixnum byte sysex command for firmware query and response
-    FIRMWARE_QUERY = 0x79
-    # Internal: Fixnum byte i2c mode write
-    I2C_MODE_WRITE = 0x00
-    # Internal: Fixnum byte i2c mode read
-    I2C_MODE_READ = 0x01
-    # Internal: Fixnum byte i2c mode continous read
-    I2C_MODE_CONTINUOUS_READ = 0x02
-    # Internal: Fixnum byte i2c mode stop reading
-    I2C_MODE_STOP_READING = 0x03
-
-    SERIAL_PORT_CLOSE = 0
-    SERIAL_PORT_OPEN = 1
-
     # Public: Returns the SerialPort port the Arduino is attached to.
     attr_reader :serial_port
     # Public: Returns the Array of pins on Arduino.
     attr_reader :pins
     # Public: Returns the Array of analog pins on Arduino.
     attr_reader :analog_pins
-    # Public: Returns the String firmware name of Arduion.
+    # Public: Returns the String firmware name of Arduino.
     attr_reader :firmware_name
-    # Public: Returns array of any Events returned from 
+    # Public: Returns array of any Events returned from ????
     attr_reader :async_events
 
     # Public: Initialize a Board
@@ -100,7 +31,7 @@ module Firmata
         @serial_port = port
       end
 
-      @serial_port_status = SERIAL_PORT_OPEN
+      @serial_port_status = Port::OPEN
       @major_version = 0
       @minor_version = 0
       @firmware_name = nil
@@ -153,7 +84,7 @@ module Firmata
         @thread_status = false
         run do
           @thread_status = true
-          while @serial_port_status == SERIAL_PORT_OPEN do
+          while @serial_port_status == Port::OPEN do
             read_and_process
             sleep 0.01
           end
@@ -165,9 +96,9 @@ module Firmata
           sleep 0.1
           break if @major_version > 0
         end
-
-        self
       end
+
+      self
     end
 
     def run(&block)
@@ -535,8 +466,8 @@ module Firmata
     end
 
     def close
-      return if @serial_port_status == SERIAL_PORT_CLOSE
-      @serial_port_status = SERIAL_PORT_CLOSE
+      return if @serial_port_status == Port::CLOSE
+      @serial_port_status = Port::OPEN
       @serial_port.close
       loop do
         break if @serial_port.closed? and !@thread_status

@@ -1,3 +1,4 @@
 require 'firmata/version'
-require 'firmata/board'
+require 'firmata/constants'
 require 'firmata/event'
+require 'firmata/board'
