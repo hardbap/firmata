@@ -103,6 +103,8 @@ module Firmata
       @analog_pins = []
       @connected = false
       @async_events = []
+
+      trap_signals 'SIGHUP', 'SIGINT', 'SIGKILL', 'SIGTERM'
     rescue LoadError
       puts "Please 'gem install hybridgroup-serialport' for serial port support."
     end
@@ -494,6 +496,24 @@ module Firmata
       end
       ret.push(END_SYSEX)
       write(*ret)
+    end
+
+    private
+    def trap_signals(*signals)
+      signals.each do |signal|
+        trap signal do
+          close
+          exit
+        end
+      end
+    end
+
+    def close
+      @serial_port.close
+      loop do
+        break if @serial_port.closed?
+        sleep 0.01
+      end
     end
   end
 end
