@@ -2,8 +2,10 @@ require 'bundler/setup'
 require 'firmata'
 require 'socket'
 
-sp = TCPSocket.open '127.0.0.1', 8023
-#sp = '/dev/tty.usbserial-A700636n'
+#sp = 'COM3' # windows
+#sp = '/dev/ttyACM0' #linux
+sp = '/dev/tty.usbmodemfa131' #mac
+
 board = Firmata::Board.new(sp)
 
 board.connect

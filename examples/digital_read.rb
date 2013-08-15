@@ -1,9 +1,10 @@
 require 'bundler/setup'
 require 'firmata'
-require 'socket'
 
-sp = TCPSocket.open 'localhost', 8023
-#sp = '/dev/tty.usbserial-A700636n'
+#sp = 'COM3' # windows
+#sp = '/dev/ttyACM0' #linux
+sp = '/dev/tty.usbmodemfa131' #mac
+
 board = Firmata::Board.new(sp)
 
 board.connect
@@ -25,7 +26,6 @@ end
 board.set_pin_mode(pin_number, Firmata::PinModes::INPUT)
 board.toggle_pin_reporting(pin_number)
 
-puts "Press Ctrl-C to stop..."
 while true do
 	puts "waiting..."
 	sleep 0.5

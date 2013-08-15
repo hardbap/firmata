@@ -1,7 +1,8 @@
+require 'bundler/setup'
 require 'firmata'
 require 'socket'
 
-sp = TCPSocket.open 'localhost', 4567
+sp = TCPSocket.new 'localhost', 8023
 board = Firmata::Board.new(sp)
 
 board.connect
@@ -12,13 +13,18 @@ puts "Firmata version #{board.version}"
 pin_number = 2
 rate = 0.5
 
-listener = ->(pin, value) { puts("#{pin}:#{value}") }
-board.on('digital-read', listener)
-board.set_pin_mode(pin_number, Firmata::Board::INPUT)
+board.on :digital_read do |pin, value|
+  puts("#{pin}:#{value}")
+end
+
+board.on :digital_read_2 do |value|
+  puts "Pin 2: #{value}"
+end
+
+board.set_pin_mode(pin_number, Firmata::PinModes::INPUT)
 board.toggle_pin_reporting(pin_number)
 
 while true do
-  puts "waiting..."
-  board.read_and_process
-  sleep 0.5
+	puts "waiting..."
+	sleep 0.5
 end
