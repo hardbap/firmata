@@ -1,6 +1,6 @@
 # Firmata
 
-A Ruby implementation of the [Firmata protocol](http://firmata.org/wiki/V2.2ProtocolDetails).
+A Ruby implementation of the [Firmata protocol](http://firmata.org/wiki/V2.3ProtocolDetails).
 
 This library is inspired by the awesome [firmata](http://jgautier.github.com/firmata/) by [jgautier](https://github.com/jgautier).
 
