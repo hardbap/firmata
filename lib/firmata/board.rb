@@ -39,6 +39,7 @@ module Firmata
       @analog_pins = []
       @connected = false
       @async_events = []
+      @read_thread = nil
 
       trap_signals 'SIGHUP', 'SIGINT', 'SIGKILL', 'SIGTERM'
     rescue LoadError
@@ -76,14 +77,11 @@ module Firmata
           event :ready
         end
 
-        @thread_status = false
-        run do
-          @thread_status = true
+        @read_thread = run do
           while @serial_port_status == Port::OPEN do
             read_and_process
             sleep 0.01
           end
-          @thread_status = false
         end
 
         loop do 
@@ -301,10 +299,10 @@ module Firmata
     private
     def close
       return if @serial_port_status == Port::CLOSE
-      @serial_port_status = Port::OPEN
       @serial_port.close
+      @serial_port_status = Port::CLOSE
       loop do
-        break if @serial_port.closed? and !@thread_status
+        break if @serial_port.closed? and @read_thread.stop?
         sleep 0.01
       end
     end
