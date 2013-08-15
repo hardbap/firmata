@@ -173,7 +173,7 @@ module Firmata
     end
 
     def test_write_firmware_query
-      mock_sp = mock_serial_port(Board::FIRMWARE_QUERY)
+      mock_sp = mock_serial_port(Board::START_SYSEX, Board::FIRMWARE_QUERY, Board::END_SYSEX)
 
       board = Board.new(mock_sp)
       board.query_firmware
