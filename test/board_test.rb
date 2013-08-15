@@ -10,7 +10,7 @@ module Firmata
 
     def mock_serial_port(*args, &block)
       mock_port = MiniTest::Mock.new
-      mock_port.expect(:is_a?, false, [nil])
+      mock_port.expect(:is_a?, false, [String])
 
       if block_given?
         yield mock_port
