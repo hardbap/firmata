@@ -4,6 +4,8 @@ A Ruby implementation of the [Firmata protocol](http://firmata.org/wiki/V2.3Prot
 
 This library is inspired by the awesome [firmata](http://jgautier.github.com/firmata/) by [jgautier](https://github.com/jgautier).
 
+[![Build Status](https://travis-ci.org/hybridgroup/firmata.png?branch=master)](https://travis-ci.org/hybridgroup/firmata)
+
 ## Installation
 
 Add this line to your application's Gemfile:

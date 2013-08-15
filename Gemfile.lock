@@ -1,0 +1,28 @@
+PATH
+  remote: .
+  specs:
+    hybridgroup-firmata (0.4.2)
+      event_spitter
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    coderay (1.0.9)
+    event_spitter (0.5.0)
+    method_source (0.8.2)
+    minitest (5.0.6)
+    pry (0.9.12.2)
+      coderay (~> 1.0.5)
+      method_source (~> 0.8)
+      slop (~> 3.4)
+    rake (10.1.0)
+    slop (3.4.6)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  hybridgroup-firmata!
+  minitest
+  pry
+  rake
