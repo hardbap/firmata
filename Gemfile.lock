@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    hybridgroup-firmata (0.4.1)
+    hybridgroup-firmata (0.4.2)
       event_spitter
 
 GEM
