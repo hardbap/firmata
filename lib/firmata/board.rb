@@ -58,24 +58,8 @@ module Firmata
     # Returns Firmata::Board board.
     def connect
       unless @connected
-        once :report_version do
-          query_capabilities
-        end
 
-        once :firmware_query do
-
-        end
-
-        once :capability_query do
-          query_analog_mapping
-        end
-
-        once :analog_mapping_query do
-          2.times { |i| toggle_pin_reporting(i) }
-
-          @connected = true
-          event :ready
-        end
+        handle_events!
 
         @read_thread = run do
           while @serial_port_status == Port::OPEN do
@@ -84,7 +68,7 @@ module Firmata
           end
         end
 
-        loop do 
+        loop do
           query_report_version
           sleep 0.1
           break if @major_version > 0
@@ -189,7 +173,7 @@ module Firmata
     #
     # Returns nothing.
     def query_firmware
-      write(FIRMWARE_QUERY)
+      write(START_SYSEX, FIRMWARE_QUERY, END_SYSEX)
     end
 
     # Public: Ask the Arduino for the current configuration of any pin.
@@ -474,6 +458,27 @@ module Firmata
           close
           exit
         end
+      end
+    end
+
+    def handle_events!
+      once :report_version do
+        query_firmware unless @firmware_name
+      end
+
+      once :firmware_query do
+        query_capabilities
+      end
+
+      once :capability_query do
+        query_analog_mapping
+      end
+
+      once :analog_mapping_query do
+        2.times { |i| toggle_pin_reporting(i) }
+
+        @connected = true
+        event :ready
       end
     end
   end
