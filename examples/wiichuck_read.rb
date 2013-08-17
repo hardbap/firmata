@@ -25,5 +25,6 @@ board.i2c_write_request(address, 0x40, 0x00)
 while true do
   board.i2c_write_request(address, 0x00, 0x00)
   board.i2c_read_request(address, 6)
+  board.read_and_process
   sleep 0.2
 end

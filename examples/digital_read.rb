@@ -28,5 +28,6 @@ board.toggle_pin_reporting(pin_number)
 
 while true do
 	puts "waiting..."
+  board.read_and_process
 	sleep 0.5
 end

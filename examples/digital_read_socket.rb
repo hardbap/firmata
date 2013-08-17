@@ -25,6 +25,7 @@ board.set_pin_mode(pin_number, Firmata::PinModes::INPUT)
 board.toggle_pin_reporting(pin_number)
 
 while true do
-	puts "waiting..."
+  puts "waiting..."
+  board.read_and_process
 	sleep 0.5
 end
