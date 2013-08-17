@@ -61,17 +61,17 @@ module Firmata
 
         handle_events!
 
+        loop do
+          read_and_process
+          sleep 0.1
+          break if @pins.length > 0
+        end
+
         @read_thread = run do
           while @serial_port_status == Port::OPEN do
             read_and_process
             sleep 0.01
           end
-        end
-
-        loop do
-          query_report_version
-          sleep 0.1
-          break if @major_version > 0
         end
       end
 
