@@ -3,7 +3,7 @@ module Firmata
     attr_reader :data, :name
 
     def initialize(name, *data)
-      @name = name
+      @name = name.to_sym
       @data = *data
     end
   end

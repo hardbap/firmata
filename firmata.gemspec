@@ -2,7 +2,7 @@
 require File.expand_path('../lib/firmata/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["'Mike Breen', 'Adrian Zankich', 'Ron Evans', 'Isaac A. Murchie'"]
+  gem.authors       = ["'Mike Breen', 'Adrian Zankich', 'Ron Evans', 'Isaac A. Murchie', 'Rafael Magaña'"]
   gem.email         = ["info@hybridgroup.com"]
   gem.description   = %q{A lib for working with the Firmata protocol in Ruby.}
   gem.summary       = %q{}
@@ -19,5 +19,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency("pry")
   gem.add_development_dependency("minitest")
 
-  gem.add_runtime_dependency("event_spitter")
+  gem.add_runtime_dependency("event_emitter")
 end

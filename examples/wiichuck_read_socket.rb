@@ -1,10 +1,8 @@
 require 'bundler/setup'
 require 'firmata'
+require 'socket'
 
-#sp = 'COM3' # windows
-#sp = '/dev/ttyACM0' #linux
-sp = '/dev/tty.usbmodemfa131' #mac
-
+sp = TCPSocket.open 'localhost', 8023
 board = Firmata::Board.new(sp)
  
 board.connect
@@ -22,6 +20,7 @@ end
 board.i2c_config(0)
 board.i2c_write_request(address, 0x40, 0x00)
  
+n = 0
 while true do
   board.i2c_write_request(address, 0x00, 0x00)
   board.i2c_read_request(address, 6)
