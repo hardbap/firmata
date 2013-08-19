@@ -60,10 +60,12 @@ module Firmata
 
         handle_events!
 
-        loop do
-          read_and_process
-          sleep 0.1
-          break if @pins.length > 0
+        catch(:initialized) do
+          loop do
+            query_report_version #unless @major_version.zero?
+            sleep 0.1
+            read_and_process
+          end
         end
       end
 
@@ -465,6 +467,7 @@ module Firmata
 
         @connected = true
         event :ready
+        throw :initialized
       end
     end
   end
