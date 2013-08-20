@@ -1,65 +1,12 @@
 require 'stringio'
-require 'serialport'
-require 'event_spitter'
+require 'event_emitter'
 
 module Firmata
   class Board
-    include EventSpitter
+    include EventEmitter
 
     # Internal: Data structure representing a pin on Arduino.
     Pin = Struct.new(:supported_modes, :mode, :value, :analog_channel)
-
-    # Public: Fixnum byte for pin mode input.
-    INPUT = 0x00
-    # Public: Fixnum byte for pin mode output.
-    OUTPUT = 0x01
-    # Public: Fixnum byte for pin mode analog.
-    ANALOG = 0x02
-    # Public: Fixnum byte for pin mode pulse width modulation.
-    PWM = 0x03
-    # Public: Fixnum byte for pin mode servo.
-    SERVO = 0x04
-
-    LOW  = 0
-    HIGH = 1
-
-    # Internal: Fixnum byte command for protocol version
-    REPORT_VERSION = 0xF9
-    # Internal: Fixnum byte command for system reset
-    SYSTEM_RESET = 0xFF
-    # Internal: Fixnum byte command for digital I/O message
-    DIGITAL_MESSAGE = 0x90
-    # Pubilc: Fixnum byte for range for digital pins for digital 2 byte data format
-    DIGITAL_MESSAGE_RANGE = 0x90..0x9F
-    # Internal: Fixnum byte command for an analog I/O message
-    ANALOG_MESSAGE = 0xE0
-    # Internal: Fixnum byte range for analog pins for analog 14-bit data format
-    ANALOG_MESSAGE_RANGE = 0xE0..0xEF
-    # Internal: Fixnum byte command to report analog pin
-    REPORT_ANALOG = 0xC0
-    # Internal: Fixnum byte command to report digital port
-    REPORT_DIGITAL = 0xD0
-    # Internal: Fixnum byte command to set pin mode (I/O)
-    PIN_MODE  = 0xF4
-
-    # Internal: Fixnum byte command for start of Sysex message
-    START_SYSEX = 0xF0
-    # Internal: Fixnum byte command for end of Sysex message
-    END_SYSEX = 0xF7
-    # Internal: Fixnum byte sysex command for capabilities query
-    CAPABILITY_QUERY = 0x6B
-    # Internal: Fixnum byte sysex command for capabilities response
-    CAPABILITY_RESPONSE = 0x6C
-    # Internal: Fixnum byte sysex command for pin state query
-    PIN_STATE_QUERY = 0x6D
-    # Internal: Fixnum byte sysex command for pin state response
-    PIN_STATE_RESPONSE = 0x6E
-    # Internal: Fixnum byte sysex command for analog mapping query
-    ANALOG_MAPPING_QUERY    = 0x69
-    # Internal: Fixnum byte sysex command for analog mapping response
-    ANALOG_MAPPING_RESPONSE = 0x6A
-    # Internal: Fixnum byte sysex command for firmware query and response
-    FIRMWARE_QUERY = 0x79
 
     # Public: Returns the SerialPort port the Arduino is attached to.
     attr_reader :serial_port
@@ -67,23 +14,38 @@ module Firmata
     attr_reader :pins
     # Public: Returns the Array of analog pins on Arduino.
     attr_reader :analog_pins
-    # Public: Returns the String firmware name of Arduion.
+    # Public: Returns the String firmware name of Arduino.
     attr_reader :firmware_name
+    # Public: Returns array of any Events returned from ????
+    attr_reader :async_events
 
     # Public: Initialize a Board
     #
     # port - a String port or an Object that responds to read and write.
     def initialize(port)
-      @serial_port = port.is_a?(String) ? SerialPort.new(port, 57600, 8, 1, SerialPort::NONE) : port
-      @serial_port.read_timeout = 2
+      if port.is_a?(String)
+        require 'serialport'
+        @serial_port = SerialPort.new(port, 57600, 8, 1, SerialPort::NONE)
+        @serial_port.read_timeout = 2
+      else
+        @serial_port = port
+      end
+
+      @serial_port_status = Port::OPEN
       @major_version = 0
       @minor_version = 0
+      @firmware_name = nil
       @pins = []
       @analog_pins = []
       @connected = false
+      @async_events = []
+
+      trap_signals 'SIGHUP', 'SIGINT', 'SIGKILL', 'SIGTERM'
+    rescue LoadError
+      puts "Please 'gem install hybridgroup-serialport' for serial port support."
     end
 
-    # Pubilc: Check if a connection to Arduino has been made.
+    # Public: Check if a connection to Arduino has been made.
     #
     # Returns Boolean connected state.
     def connected?
@@ -95,166 +57,19 @@ module Firmata
     # Returns Firmata::Board board.
     def connect
       unless @connected
-        once('report_version', ->() do
-          once('firmware_query', ->() do
-            once('capability_query', ->() do
-              once('analog_mapping_query', ->() do
 
-                2.times { |i| toggle_pin_reporting(i) }
+        handle_events!
 
-                @connected = true
-                emit('ready')
-              end)
-              query_analog_mapping
-           end)
-            query_capabilities
-          end)
-        end)
-
-         until connected?
-          read_and_process
-          delay(0.5)
+        catch(:initialized) do
+          loop do
+            query_report_version #unless @major_version.zero?
+            sleep 0.1
+            read_and_process
+          end
         end
       end
 
       self
-    end
-
-    # Internal: Write data to the underlying serial port.
-    #
-    # commands - Zero or more byte commands to be written.
-    #
-    # Examples
-    #
-    #   write(START_SYSEX, CAPABILITY_QUERY, END_SYSEX)
-    #
-    # Returns nothing.
-    def write(*commands)
-      serial_port.write_nonblock(commands.map(&:chr).join)
-    end
-
-    # Internal: Read data from the underlying serial port.
-    #
-    # Returns String data read for serial port.
-    def read
-      serial_port.read_nonblock(4096)
-    rescue EOFError
-    end
-
-    # Internal: Process a series of bytes.
-    #
-    # data: The String data to process.
-    #
-    # Returns nothing.
-    def process(data)
-      bytes = StringIO.new(String(data)).bytes
-      bytes.each do |byte|
-        case byte
-        when REPORT_VERSION
-          @major_version = bytes.next
-          @minor_version = bytes.next
-
-          emit('report_version')
-
-        when ANALOG_MESSAGE_RANGE
-          least_significant_byte = bytes.next
-          most_significant_byte = bytes.next
-
-          value = least_significant_byte | (most_significant_byte << 7)
-          pin = byte & 0x0F
-
-          if analog_pin = analog_pins[pin]
-            pins[analog_pin].value = value
-
-            emit('analog-read', pin, value)
-            emit("analog-read-#{pin}", value)
-          end
-
-        when DIGITAL_MESSAGE_RANGE
-          port           = byte & 0x0F
-          first_bitmask  = bytes.next
-          second_bitmask = bytes.next
-          port_value     = first_bitmask | (second_bitmask << 7)
-
-          8.times do |i|
-            pin_number = 8 * port + i
-            if pin = pins[pin_number] and pin.mode == INPUT
-              value = (port_value >> (i & 0x07)) & 0x01
-              pin.value = value
-              emit('digital-read', pin_number, value)
-              emit("digital-read-#{pin_number}", value)
-            end
-          end
-
-        when START_SYSEX
-          current_buffer = [byte]
-          begin
-            current_buffer.push(bytes.next)
-          end until current_buffer.last == END_SYSEX
-
-          command = current_buffer[1]
-
-          case command
-          when CAPABILITY_RESPONSE
-            supported_modes = 0
-            n = 0
-
-            current_buffer.slice(2, current_buffer.length - 3).each do |byte|
-              if byte == 127
-                modes = []
-                # the pin modes
-                [ INPUT, OUTPUT, ANALOG, PWM, SERVO ].each do |mode|
-                   modes.push(mode) unless (supported_modes & (1 << mode)).zero?
-                end
-
-                @pins.push(Pin.new(modes, OUTPUT, 0))
-
-                supported_modes = 0
-                n = 0
-                next
-              end
-
-              supported_modes |= (1 << byte) if n.zero?
-
-              n ^= 1
-            end
-
-            emit('capability_query')
-
-          when ANALOG_MAPPING_RESPONSE
-            pin_index = 0
-
-            current_buffer.slice(2, current_buffer.length - 3).each do |byte|
-
-              @pins[pin_index].analog_channel = byte
-
-              @analog_pins.push(pin_index) unless byte == 127
-
-              pin_index += 1
-            end
-
-            emit('analog_mapping_query')
-
-          when PIN_STATE_RESPONSE
-            pin       = pins[current_buffer[2]]
-            pin.mode  = current_buffer[3]
-            pin.value = current_buffer[4]
-
-            pin.value |= (current_buffer[5] << 7) if current_buffer.size > 6
-
-            pin.value |= (current_buffer[6] << 14) if current_buffer.size > 7
-
-          when FIRMWARE_QUERY
-            @firmware_name = current_buffer.slice(4, current_buffer.length - 5).reject { |b| b.zero? }.map(&:chr).join
-            emit('firmware_query')
-
-          else
-            puts 'bad byte'
-          end
-        end
-      end
-    rescue StopIteration
-      # do nadda
     end
 
     # Public: Read the serial port and process the results
@@ -352,7 +167,7 @@ module Firmata
     #
     # Returns nothing.
     def query_firmware
-      write(FIRMWARE_QUERY)
+      write(START_SYSEX, FIRMWARE_QUERY, END_SYSEX)
     end
 
     # Public: Ask the Arduino for the current configuration of any pin.
@@ -362,6 +177,11 @@ module Firmata
     # Returns nothing.
     def query_pin_state(pin)
       write(START_SYSEX, PIN_STATE_QUERY, pin.to_i, END_SYSEX)
+    end
+
+    #
+    def query_report_version
+      write REPORT_VERSION
     end
 
     # Public: Ask the Arduino about its capabilities and current state.
@@ -390,6 +210,267 @@ module Firmata
     def toggle_pin_reporting(pin, state = HIGH, mode = REPORT_DIGITAL)
       write(mode | pin, state)
     end
+    # Public: Make an i2c request.
+    #
+    # I2C read/write request
+    #
+    # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+    # 1  I2C_REQUEST (0x76)
+    # 2  slave address (LSB)
+    # 3  slave address (MSB) + read/write and address mode bits
+    #      {7: always 0} + {6: reserved} + {5: address mode, 1 means 10-bit mode} +
+    #      {4-3: read/write, 00 => write, 01 => read once, 10 => read continuously, 11 => stop reading} +
+    #      {2-0: slave address MSB in 10-bit mode, not used in 7-bit mode}
+    # 4  data 0 (LSB)
+    # 5  data 0 (MSB)
+    # 6  data 1 (LSB)
+    # 7  data 1 (MSB)
+    # n  END_SYSEX (0xF7)
+    # Returns nothing.
+    def i2c_read_request(slave_address, num_bytes)
+      address = [slave_address].pack("v")
+      write(START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_READ << 3), num_bytes & 0x7F, ((num_bytes >> 7) & 0x7F), END_SYSEX)
+    end
 
+    def i2c_write_request(slave_address, *data)
+      address = [slave_address].pack("v")
+      ret = [START_SYSEX, I2C_REQUEST, address[0], (I2C_MODE_WRITE << 3)] 
+      data.each do |n|
+        ret.push([n].pack("v")[0])
+        ret.push([n].pack("v")[1])
+      end
+      ret.push(END_SYSEX)
+      write(*ret)
+    end
+    # Public: Set i2c config.
+    #   I2C config
+    # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+    # 1  I2C_CONFIG (0x78)
+    # 2  Delay in microseconds (LSB)
+    # 3  Delay in microseconds (MSB)
+    # ... user defined for special cases, etc
+    # n  END_SYSEX (0xF7)
+    # Returns nothing.
+    def i2c_config(*data)
+      ret = [START_SYSEX, I2C_CONFIG]
+      data.each do |n|
+        ret.push([n].pack("v")[0])
+        ret.push([n].pack("v")[1])
+      end
+      ret.push(END_SYSEX)
+      write(*ret)
+    end
+
+    protected
+    # Dispatches an event
+    def event(name, *data)
+      async_events << Event.new(name, *data)
+      emit(name, *data)
+    end
+
+    private
+    def close
+      return if @serial_port_status == Port::CLOSE
+      @serial_port.close
+      @serial_port_status = Port::CLOSE
+      loop do
+        break if @serial_port.closed?
+        sleep 0.01
+      end
+    end
+
+    # Internal: Write data to the underlying serial port.
+    #
+    # commands - Zero or more byte commands to be written.
+    #
+    # Examples
+    #
+    #   write(START_SYSEX, CAPABILITY_QUERY, END_SYSEX)
+    #
+    # Returns nothing.
+    def write(*commands)
+      serial_port.write_nonblock(commands.map(&:chr).join)
+    end
+
+    # Internal: Read data from the underlying serial port.
+    #
+    # Returns String data read for serial port.
+    def read
+      return serial_port.read_nonblock(1024)
+    rescue EOFError
+    rescue Errno::EAGAIN
+    end
+
+    # Internal: Process a series of bytes.
+    #
+    # data: The String data to process.
+    #
+    # Returns nothing.
+    def process(data)
+      bytes = StringIO.new(String(data))
+      while byte = bytes.getbyte
+        case byte
+        when REPORT_VERSION
+          @major_version = bytes.getbyte
+          @minor_version = bytes.getbyte
+          event :report_version
+        when ANALOG_MESSAGE_RANGE
+          least_significant_byte = bytes.getbyte
+          most_significant_byte = bytes.getbyte
+
+          value = least_significant_byte | (most_significant_byte << 7)
+          pin = byte & 0x0F
+
+          if analog_pin = analog_pins[pin]
+            pins[analog_pin].value = value
+
+            event :analog_read, pin, value
+            event("analog_read_#{pin}", value)
+          end
+
+        when DIGITAL_MESSAGE_RANGE
+          port           = byte & 0x0F
+          first_bitmask  = bytes.getbyte
+          second_bitmask = bytes.getbyte
+          port_value     = first_bitmask | (second_bitmask << 7)
+
+          8.times do |i|
+            pin_number = 8 * port + i
+            if pin = pins[pin_number] and pin.mode == INPUT
+              value = (port_value >> (i & 0x07)) & 0x01
+              pin.value = value
+              event :digital_read, pin_number, value
+              event "digital_read_#{pin_number}", value
+            end
+          end
+
+        when START_SYSEX
+          current_buffer = [byte]
+          begin
+            current_buffer.push(bytes.getbyte)
+          end until current_buffer.last == END_SYSEX
+
+          command = current_buffer[1]
+
+          case command
+          when CAPABILITY_RESPONSE
+            supported_modes = 0
+            n = 0
+
+            current_buffer.slice(2, current_buffer.length - 3).each do |byte|
+              if byte == 127
+                modes = []
+                # the pin modes
+                [ INPUT, OUTPUT, ANALOG, PWM, SERVO ].each do |mode|
+                   modes.push(mode) unless (supported_modes & (1 << mode)).zero?
+                end
+
+                @pins.push(Pin.new(modes, OUTPUT, 0))
+
+                supported_modes = 0
+                n = 0
+                next
+              end
+
+              supported_modes |= (1 << byte) if n.zero?
+
+              n ^= 1
+            end
+
+            event :capability_query
+
+          when ANALOG_MAPPING_RESPONSE
+            pin_index = 0
+
+            current_buffer.slice(2, current_buffer.length - 3).each do |byte|
+
+              @pins[pin_index].analog_channel = byte
+
+              @analog_pins.push(pin_index) unless byte == 127
+
+              pin_index += 1
+            end
+  
+            event :analog_mapping_query
+
+          when PIN_STATE_RESPONSE
+            pin       = pins[current_buffer[2]]
+            pin.mode  = current_buffer[3]
+            pin.value = current_buffer[4]
+
+            pin.value |= (current_buffer[5] << 7) if current_buffer.size > 6
+
+            pin.value |= (current_buffer[6] << 14) if current_buffer.size > 7
+
+            event(:pin_state, current_buffer[2], pin.value)
+            event("pin_#{current_buffer[2]}_state", pin.value)
+          when I2C_REPLY
+            # I2C reply
+            # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
+            # 1  I2C_REPLY (0x77)
+            # 2  slave address (LSB)
+            # 3  slave address (MSB)
+            # 4  register (LSB)
+            # 5  register (MSB)
+            # 6  data 0 LSB
+            # 7  data 0 MSB
+            # n  END_SYSEX (0xF7)
+            i2c_reply = {
+              :slave_address => current_buffer[2,2].pack("CC").unpack("v").first,
+              :register => current_buffer[4,2].pack("CC").unpack("v").first,
+              :data => [current_buffer[6,2].pack("CC").unpack("v").first]
+            }
+            i = 8
+            while current_buffer[i] != "0xF7".hex do
+              break if !(!current_buffer[i,2].nil? && current_buffer[i,2].count == 2)
+              i2c_reply[:data].push(current_buffer[i,2].pack("CC").unpack("v").first)
+              i += 2
+            end
+            event :i2c_reply, i2c_reply
+
+          when FIRMWARE_QUERY
+            @firmware_name = current_buffer.slice(4, current_buffer.length - 5).reject { |b| b.zero? }.map(&:chr).join
+            event :firmware_query
+          else
+            puts 'bad byte'
+          end
+        end
+      end
+    rescue StopIteration
+      # do nadda
+    rescue NoMethodError
+      # got some bad data or something? hack to just skip to next attempt to process...
+    end
+
+    def trap_signals(*signals)
+      signals.each do |signal|
+        trap signal do
+          close
+          exit
+        end
+      end
+    end
+
+    def handle_events!
+      once :report_version do
+        query_firmware unless @firmware_name
+      end
+
+      once :firmware_query do
+        query_capabilities
+      end
+
+      once :capability_query do
+        query_analog_mapping
+      end
+
+      once :analog_mapping_query do
+        2.times { |i| toggle_pin_reporting(i) }
+
+        @connected = true
+        event :ready
+        throw :initialized
+      end
+    end
   end
 end
