@@ -402,6 +402,8 @@ module Firmata
 
             pin.value |= (current_buffer[6] << 14) if current_buffer.size > 7
 
+            event(:pin_state, current_buffer[2], pin.value)
+            event("pin_#{current_buffer[2]}_state", pin.value)
           when I2C_REPLY
             # I2C reply
             # 0  START_SYSEX (0xF0) (MIDI System Exclusive)
