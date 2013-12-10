@@ -73,8 +73,10 @@ module Firmata
     # Public: Initialize a Board
     #
     # port - a String port or an Object that responds to read and write.
-    def initialize(port)
-      @serial_port = port.is_a?(String) ? SerialPort.new(port, 57600, 8, 1, SerialPort::NONE) : port
+    # opitions - Hash of options. Available options: baudrate - baudrate for serial port.
+    def initialize(port, options = {})
+      baudrate = options[:baudrate] || 57600
+      @serial_port = port.is_a?(String) ? SerialPort.new(port, baudrate, 8, 1, SerialPort::NONE) : port
       @serial_port.read_timeout = 2
       @major_version = 0
       @minor_version = 0
