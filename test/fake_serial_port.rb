@@ -43,7 +43,7 @@ class FakeSerialPort
   alias_method :write_nonblock, :write
 
   def bytes
-    bytes = StringIO.new(@buffer).bytes
+    bytes = StringIO.new(@buffer).each_byte
     @buffer = ""
     bytes
   end

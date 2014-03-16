@@ -149,7 +149,7 @@ module Firmata
     #
     # Returns nothing.
     def process(data)
-      bytes = StringIO.new(String(data)).bytes
+      bytes = StringIO.new(String(data)).each_byte
       bytes.each do |byte|
         case byte
         when REPORT_VERSION
