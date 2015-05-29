@@ -354,7 +354,7 @@ module Firmata
     #
     # Returns nothing.
     def query_firmware
-      write(FIRMWARE_QUERY)
+      write(START_SYSEX, FIRMWARE_QUERY, END_SYSEX)
     end
 
     # Public: Ask the Arduino for the current configuration of any pin.
